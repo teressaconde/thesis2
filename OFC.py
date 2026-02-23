@@ -1,4 +1,6 @@
 import streamlit as st
+import base64
+from html import escape
 
 
 st.set_page_config(page_title="Oral Fluency Classification", layout="wide")
@@ -6,6 +8,13 @@ st.set_page_config(page_title="Oral Fluency Classification", layout="wide")
 
 if "dataset" not in st.session_state:
 	st.session_state.dataset = "Avalinguo"
+
+
+if str(st.query_params.get("remove_audio", "0")) == "1":
+	st.session_state.pop("uploaded_audio_obj", None)
+	st.session_state.pop("audio_uploader", None)
+	st.query_params.clear()
+	st.rerun()
 
 
 st.markdown(
@@ -16,11 +25,12 @@ st.markdown(
 	.stApp {
 		background-color: #ececec;
 		font-family: 'Inter', sans-serif;
+		overflow-x: hidden;
 	}
 
 	.block-container {
-		max-width: 1120px;
-		padding-top: 0;
+		max-width: 1240px;
+		padding-top: 0.6rem;
 		padding-bottom: 2.5rem;
 	}
 
@@ -29,20 +39,22 @@ st.markdown(
 	}
 
 	.header-bar {
-		margin-left: -2rem;
-		margin-right: -2rem;
-		margin-bottom: 3.2rem;
+		width: 100vw;
+		margin-left: calc(50% - 50vw);
+		margin-right: calc(50% - 50vw);
+		margin-bottom: 2.55rem;
 		background: #274d98;
-		height: 90px;
+		height: 94px;
 		display: flex;
 		align-items: center;
-		padding-left: 68px;
+		padding-left: max(32px, calc((100vw - 1240px) / 2 + 70px));
 		border-top: 1px solid #1c3a76;
+		box-sizing: border-box;
 	}
 
 	.header-title {
 		color: #ffffff;
-		font-size: 48px;
+		font-size: 50px;
 		font-weight: 800;
 		line-height: 1;
 		margin: 0;
@@ -60,12 +72,17 @@ st.markdown(
 	.stButton > button {
 		border-radius: 999px;
 		font-weight: 700;
-		font-size: 32px;
-		padding: 10px 34px;
+		font-size: 17px;
+		padding: 8px 24px;
 		line-height: 1;
-		min-height: 0;
+		min-height: 38px;
 		border: 2px solid #2e56a4;
 		transition: none;
+	}
+
+	.upload-shell {
+		max-width: 660px;
+		margin: 0 auto;
 	}
 
 	.stButton > button[kind="primary"] {
@@ -78,41 +95,106 @@ st.markdown(
 		background: #ececec;
 	}
 
-	div[data-testid="stFileUploaderDropzone"] {
-		border: 2.5px dashed #5a7fc3;
-		border-radius: 12px;
-		background: #d8deec;
-		min-height: 178px;
+	div[data-testid="stFileUploader"] {
+		position: relative;
+	}
+
+	div[data-testid="stFileUploader"] section,
+	div[data-testid="stFileUploaderDropzone"],
+	section[data-testid="stFileUploaderDropzone"] {
+		position: relative;
+		border: 2.5px dashed #5a7fc3 !important;
+		border-radius: 12px !important;
+		background: #d2d8e5 !important;
+		min-height: 180px !important;
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		padding-top: 0;
+		box-shadow: none !important;
+		background-image: none !important;
+	}
+
+	div[data-testid="stFileUploader"] button,
+	div[data-testid="stFileUploaderDropzone"] button,
+	section[data-testid="stFileUploaderDropzone"] button {
+		position: absolute !important;
+		inset: 0 !important;
+		opacity: 0 !important;
+		width: 100% !important;
+		height: 100% !important;
+		z-index: 4 !important;
 	}
 
 	div[data-testid="stFileUploaderDropzone"] section {
 		padding: 0;
 	}
 
-	div[data-testid="stFileUploaderDropzone"] [data-testid="stFileUploaderDropzoneInstructions"] {
+	div[data-testid="stFileUploader"] [data-testid="stFileUploaderDropzoneInstructions"],
+	div[data-testid="stFileUploaderDropzone"] [data-testid="stFileUploaderDropzoneInstructions"],
+	section[data-testid="stFileUploaderDropzone"] [data-testid="stFileUploaderDropzoneInstructions"] {
+		opacity: 0 !important;
+		pointer-events: none !important;
+	}
+
+	div[data-testid="stFileUploader"] section::before,
+	div[data-testid="stFileUploaderDropzone"]::before,
+	section[data-testid="stFileUploaderDropzone"]::before {
+		content: "";
+		position: absolute;
+		top: 22px;
+		left: 50%;
+		transform: translateX(-50%);
+		width: 86px;
+		height: 66px;
+		background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 90'><rect x='8' y='28' width='50' height='40' rx='6' fill='%23b4b8c2'/><rect x='26' y='18' width='32' height='18' rx='4' fill='%23c2c6cf'/><rect x='44' y='22' width='50' height='44' rx='7' fill='%23a8adb8'/><rect x='56' y='12' width='28' height='16' rx='3' fill='%23c7cbd3'/><circle cx='97' cy='44' r='11' fill='%238d929d'/><rect x='92' y='55' width='10' height='22' rx='4' transform='rotate(24 97 66)' fill='%23989daa'/></svg>");
+		background-size: contain;
+		background-repeat: no-repeat;
+		background-position: center;
+		opacity: 0.9;
+		z-index: 2;
+		pointer-events: none;
+	}
+
+	div[data-testid="stFileUploader"] section::after,
+	div[data-testid="stFileUploaderDropzone"]::after,
+	section[data-testid="stFileUploaderDropzone"]::after {
+		content: "Upload speech audio here";
+		position: absolute;
+		left: 50%;
+		top: 112px;
+		transform: translateX(-50%);
+		white-space: nowrap;
 		text-align: center;
-		color: #7a7a7a;
-	}
-
-	div[data-testid="stFileUploaderDropzone"] [data-testid="stFileUploaderDropzoneInstructions"] div {
 		font-size: 18px;
+		line-height: 1.25;
 		font-weight: 700;
+		color: #8e949e;
+		z-index: 2;
+		pointer-events: none;
 	}
 
-	div[data-testid="stFileUploaderDropzone"] small {
+	div[data-testid="stFileUploader"]::after {
+		content: "Supported formats: MP3, WAV · Clear speech recommended";
+		position: absolute;
+		left: 50%;
+		top: 139px;
+		transform: translateX(-50%);
+		white-space: nowrap;
+		text-align: center;
 		font-size: 11px;
-		color: #8d8d8d;
+		line-height: 1.25;
+		font-weight: 500;
+		color: #9aa0ab;
+		z-index: 2;
+		pointer-events: none;
 	}
 
 	.uploaded-card {
 		height: 178px;
 		border: 1.8px solid #5a7fc3;
 		border-radius: 12px;
-		background: #d8deec;
+		background: #d2d8e5;
 		padding: 22px 24px;
 		display: flex;
 		align-items: center;
@@ -150,26 +232,37 @@ st.markdown(
 
 	.audio-size {
 		font-size: 18px;
-		margin: 0;
+		margin: 0 0 6px 0;
 	}
 
-	.audio-wave {
-		font-size: 34px;
-		letter-spacing: 2px;
-		line-height: 1;
-		margin-top: 4px;
-		color: #858585;
+	.audio-player-inline {
+		width: 100%;
+		height: 34px;
+		border-radius: 10px;
 	}
 
 	.audio-close {
-		font-size: 42px;
 		color: #8f8f8f;
 		margin-left: 8px;
+		font-size: 36px;
+		font-weight: 500;
 		line-height: 1;
+		text-decoration: none;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		padding-bottom: 0;
+		box-sizing: border-box;
+		opacity: 0.75;
+	}
+
+	.audio-close:hover {
+		color: #6f6f6f;
+		opacity: 1;
 	}
 
 	.arrow-holder {
-		margin-top: 44px;
+		margin-top: 48px;
 		display: flex;
 		justify-content: center;
 		align-items: center;
@@ -191,51 +284,53 @@ st.markdown(
 	.result-card {
 		border: 2px solid #5a7fc3;
 		border-radius: 18px;
-		padding: 28px 24px 26px;
-		min-height: 415px;
+		padding: 18px 18px 14px;
+		min-height: 190px;
 		background: #ececec;
 	}
 
 	.result-title-green {
-		color: #37c424;
-		font-size: 52px;
+		color: #37c424 !important;
+		font-size: 40px;
 		font-weight: 800;
-		margin: 0 0 22px 0;
+		margin: 0 0 10px 0;
 		line-height: 1;
 	}
 
 	.result-title-red {
-		color: #ff1f4e;
-		font-size: 52px;
+		color: #ff1f4e !important;
+		font-size: 40px;
 		font-weight: 800;
-		margin: 0 0 22px 0;
+		margin: 0 0 10px 0;
 		line-height: 1;
 	}
 
 	.result-text-green {
-		color: #37c424;
-		font-size: 43px;
-		line-height: 1.18;
+		color: #37c424 !important;
+		font-size: 14px;
+		line-height: 1.3;
 		font-weight: 500;
 		margin: 0;
-		text-align: justify;
+		text-align: left;
+		word-spacing: normal;
 	}
 
 	.result-text-red {
-		color: #ff1f4e;
-		font-size: 43px;
-		line-height: 1.18;
+		color: #ff1f4e !important;
+		font-size: 14px;
+		line-height: 1.3;
 		font-weight: 500;
 		margin: 0;
-		text-align: justify;
+		text-align: left;
+		word-spacing: normal;
 	}
 
 	@media (max-width: 1200px) {
 		.header-title { font-size: 38px; }
-		.stButton > button { font-size: 24px; }
-		.result-title-green, .result-title-red { font-size: 40px; }
-		.result-text-green, .result-text-red { font-size: 30px; }
-		.audio-name { font-size: 28px; }
+		.stButton > button { font-size: 15px; }
+		.result-title-green, .result-title-red { font-size: 36px; }
+		.result-text-green, .result-text-red { font-size: 16px; }
+		.audio-name { font-size: 26px; }
 	}
 	</style>
 	""",
@@ -251,7 +346,7 @@ st.markdown(
 	unsafe_allow_html=True,
 )
 
-side_l, col_left, col_right, side_r = st.columns([2.8, 1.2, 1.2, 2.8], gap="small")
+side_l, col_left, col_right, side_r = st.columns([3.4, 1.5, 1.5, 3.4], gap="small")
 
 with col_left:
 	if st.button(
@@ -269,10 +364,11 @@ with col_right:
 	):
 		st.session_state.dataset = "SpeechOcean"
 
-top_left, top_right = st.columns([12, 1.4], gap="small")
+margin_l, top_left, top_right, margin_r = st.columns([1.25, 8.6, 1.0, 1.25], gap="small")
 
 with top_left:
 	uploaded_audio = st.session_state.get("uploaded_audio_obj")
+	st.markdown('<div class="upload-shell">', unsafe_allow_html=True)
 
 	if uploaded_audio is None:
 		uploaded_audio = st.file_uploader(
@@ -287,20 +383,27 @@ with top_left:
 
 	if uploaded_audio is not None:
 		size_mb = uploaded_audio.size / (1024 * 1024)
+		file_ext = uploaded_audio.name.split(".")[-1].lower() if "." in uploaded_audio.name else "wav"
+		audio_mime = "audio/wav" if file_ext == "wav" else "audio/mpeg"
+		audio_b64 = base64.b64encode(uploaded_audio.getvalue()).decode("utf-8")
+		audio_src = f"data:{audio_mime};base64,{audio_b64}"
+		safe_name = escape(uploaded_audio.name)
 		st.markdown(
 			f"""
 			<div class="uploaded-card">
 				<div class="audio-icon">♪</div>
 				<div class="audio-details">
-					<p class="audio-name">{uploaded_audio.name}</p>
+					<p class="audio-name">{safe_name}</p>
 					<p class="audio-size">{size_mb:.1f} MB</p>
-					<div class="audio-wave">◉||| ||| |||| ||| || ||| |||| |||| ||||| ..............</div>
+					<audio controls class="audio-player-inline" src="{audio_src}"></audio>
 				</div>
-				<div class="audio-close">⊗</div>
+				<a class="audio-close" href="?remove_audio=1" title="Remove audio">×</a>
 			</div>
 			""",
 			unsafe_allow_html=True,
 		)
+
+	st.markdown('</div>', unsafe_allow_html=True)
 
 with top_right:
 	st.markdown(
@@ -312,9 +415,9 @@ with top_right:
 		unsafe_allow_html=True,
 	)
 
-st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
+st.markdown("<div style='height:24px;'></div>", unsafe_allow_html=True)
 
-bottom_left, bottom_right = st.columns(2, gap="large")
+bottom_left, bottom_right = st.columns([1, 1], gap="large")
 
 with bottom_left:
 	st.markdown(
