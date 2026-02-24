@@ -12,6 +12,7 @@ if "dataset" not in st.session_state:
 
 if str(st.query_params.get("remove_audio", "0")) == "1":
 	st.session_state.pop("uploaded_audio_obj", None)
+	st.session_state.pop("uploaded_audio_data", None)
 	st.session_state.pop("audio_uploader", None)
 	st.query_params.clear()
 	st.rerun()
@@ -147,7 +148,7 @@ st.markdown(
 		transform: translateX(-50%);
 		width: 86px;
 		height: 66px;
-		background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 90'><rect x='8' y='28' width='50' height='40' rx='6' fill='%23b4b8c2'/><rect x='26' y='18' width='32' height='18' rx='4' fill='%23c2c6cf'/><rect x='44' y='22' width='50' height='44' rx='7' fill='%23a8adb8'/><rect x='56' y='12' width='28' height='16' rx='3' fill='%23c7cbd3'/><circle cx='97' cy='44' r='11' fill='%238d929d'/><rect x='92' y='55' width='10' height='22' rx='4' transform='rotate(24 97 66)' fill='%23989daa'/></svg>");
+		background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 90 90'><rect x='8' y='28' width='50' height='40' rx='6' fill='%23b4b8c2'/><rect x='26' y='18' width='32' height='18' rx='4' fill='%23c2c6cf'/><rect x='44' y='22' width='50' height='44' rx='7' fill='%23a8adb8'/><rect x='56' y='12' width='28' height='16' rx='3' fill='%23c7cbd3'/><circle cx='97' cy='44' r='11' fill='%238d929d'/><rect x='92' y='55' width='10' height='22' rx='4' transform='rotate(24 97 66)' fill='%23989daa'/></svg>");
 		background-size: contain;
 		background-repeat: no-repeat;
 		background-position: center;
@@ -262,7 +263,7 @@ st.markdown(
 	}
 
 	.arrow-holder {
-		margin-top: 48px;
+		min-height: 180px;
 		display: flex;
 		justify-content: center;
 		align-items: center;
@@ -284,8 +285,8 @@ st.markdown(
 	.result-card {
 		border: 2px solid #5a7fc3;
 		border-radius: 18px;
-		padding: 18px 18px 14px;
-		min-height: 190px;
+		padding: 18px 22px 14px;
+		min-height: 290px;
 		background: #ececec;
 	}
 
@@ -293,7 +294,7 @@ st.markdown(
 		color: #37c424 !important;
 		font-size: 40px;
 		font-weight: 800;
-		margin: 0 0 10px 0;
+		margin: 0 0 28px 0;
 		line-height: 1;
 	}
 
@@ -301,14 +302,14 @@ st.markdown(
 		color: #ff1f4e !important;
 		font-size: 40px;
 		font-weight: 800;
-		margin: 0 0 10px 0;
+		margin: 0 0 28px 0;
 		line-height: 1;
 	}
 
 	.result-text-green {
 		color: #37c424 !important;
-		font-size: 14px;
-		line-height: 1.3;
+		font-size: 22px;
+		line-height: 1.35;
 		font-weight: 500;
 		margin: 0;
 		text-align: left;
@@ -317,19 +318,19 @@ st.markdown(
 
 	.result-text-red {
 		color: #ff1f4e !important;
-		font-size: 14px;
-		line-height: 1.3;
+		font-size: 22px;
+		line-height: 1.35;
 		font-weight: 500;
 		margin: 0;
 		text-align: left;
 		word-spacing: normal;
 	}
 
-	@media (max-width: 1200px) {
+	@media (max-width: 90px) {
 		.header-title { font-size: 38px; }
 		.stButton > button { font-size: 15px; }
 		.result-title-green, .result-title-red { font-size: 36px; }
-		.result-text-green, .result-text-red { font-size: 16px; }
+		.result-text-green, .result-text-red { font-size: 18px; }
 		.audio-name { font-size: 26px; }
 	}
 	</style>
@@ -346,31 +347,30 @@ st.markdown(
 	unsafe_allow_html=True,
 )
 
-side_l, col_left, col_right, side_r = st.columns([3.4, 1.5, 1.5, 3.4], gap="small")
-
-with col_left:
-	if st.button(
-		"Avalinguo",
-		type="primary" if st.session_state.dataset == "Avalinguo" else "secondary",
-		use_container_width=True,
-	):
-		st.session_state.dataset = "Avalinguo"
-
-with col_right:
-	if st.button(
-		"SpeechOcean",
-		type="primary" if st.session_state.dataset == "SpeechOcean" else "secondary",
-		use_container_width=True,
-	):
-		st.session_state.dataset = "SpeechOcean"
-
-margin_l, top_left, top_right, margin_r = st.columns([1.25, 8.6, 1.0, 1.25], gap="small")
+margin_l, top_left, arrow_col, margin_r = st.columns([1.25, 8.6, 1.0, 1.25], gap="small")
 
 with top_left:
-	uploaded_audio = st.session_state.get("uploaded_audio_obj")
+	# Dataset buttons centered above the upload area
+	btn_pad_l, btn_left, btn_right, btn_pad_r = st.columns([2.2, 2, 2, 2.2], gap="small")
+	with btn_left:
+		if st.button(
+			"Avalinguo",
+			type="primary" if st.session_state.dataset == "Avalinguo" else "secondary",
+			use_container_width=True,
+		):
+			st.session_state.dataset = "Avalinguo"
+	with btn_right:
+		if st.button(
+			"SpeechOcean",
+			type="primary" if st.session_state.dataset == "SpeechOcean" else "secondary",
+			use_container_width=True,
+		):
+			st.session_state.dataset = "SpeechOcean"
+
+	uploaded_audio_data = st.session_state.get("uploaded_audio_data")
 	st.markdown('<div class="upload-shell">', unsafe_allow_html=True)
 
-	if uploaded_audio is None:
+	if uploaded_audio_data is None:
 		uploaded_audio = st.file_uploader(
 			"Upload speech audio",
 			type=["wav", "mp3"],
@@ -379,15 +379,22 @@ with top_left:
 		)
 		if uploaded_audio is not None:
 			st.session_state.uploaded_audio_obj = uploaded_audio
+			file_ext = uploaded_audio.name.split(".")[-1].lower() if "." in uploaded_audio.name else "wav"
+			audio_mime = "audio/wav" if file_ext == "wav" else "audio/mpeg"
+			st.session_state.uploaded_audio_data = {
+				"name": uploaded_audio.name,
+				"size": uploaded_audio.size,
+				"mime": audio_mime,
+				"bytes": uploaded_audio.getvalue(),
+			}
 			st.rerun()
 
-	if uploaded_audio is not None:
-		size_mb = uploaded_audio.size / (1024 * 1024)
-		file_ext = uploaded_audio.name.split(".")[-1].lower() if "." in uploaded_audio.name else "wav"
-		audio_mime = "audio/wav" if file_ext == "wav" else "audio/mpeg"
-		audio_b64 = base64.b64encode(uploaded_audio.getvalue()).decode("utf-8")
+	if uploaded_audio_data is not None:
+		size_mb = uploaded_audio_data["size"] / (1024 * 1024)
+		audio_mime = uploaded_audio_data["mime"]
+		audio_b64 = base64.b64encode(uploaded_audio_data["bytes"]).decode("utf-8")
 		audio_src = f"data:{audio_mime};base64,{audio_b64}"
-		safe_name = escape(uploaded_audio.name)
+		safe_name = escape(uploaded_audio_data["name"])
 		st.markdown(
 			f"""
 			<div class="uploaded-card">
@@ -405,15 +412,13 @@ with top_left:
 
 	st.markdown('</div>', unsafe_allow_html=True)
 
-with top_right:
-	st.markdown(
-		"""
-		<div class="arrow-holder">
-			<div class="arrow-circle">➜</div>
-		</div>
-		""",
-		unsafe_allow_html=True,
-	)
+with arrow_col:
+	st.markdown('<div class="arrow-holder">', unsafe_allow_html=True)
+	go_clicked = st.button("➜", key="go_results", disabled=uploaded_audio_data is None)
+	st.markdown('</div>', unsafe_allow_html=True)
+
+	if go_clicked and uploaded_audio_data is not None:
+		st.switch_page("pages/2.py")
 
 st.markdown("<div style='height:24px;'></div>", unsafe_allow_html=True)
 
