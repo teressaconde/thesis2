@@ -4,7 +4,8 @@ from html import escape
 
 
 st.set_page_config(page_title="Oral Fluency Classification", layout="wide")
-
+# Hide sidebar
+st.markdown("<style> [data-testid='stSidebarNav'] {display: none;} section[data-testid='stSidebar'] {display: none;} </style>", unsafe_allow_html=True)
 
 if "dataset" not in st.session_state:
 	st.session_state.dataset = "Avalinguo"
@@ -422,7 +423,7 @@ with arrow_col:
 	st.markdown('</div>', unsafe_allow_html=True)
 
 	if go_clicked and uploaded_audio_data is not None:
-		st.switch_page("pages/2.py")
+		st.switch_page("pages/results.py")
 
 st.markdown("<div style='height:24px;'></div>", unsafe_allow_html=True)
 
