@@ -140,7 +140,7 @@ def predict_so762(audio_bytes):
 
 
 # =================================================
-# CARD BUILDER (handles dynamic class labels)
+# CARD BUILDER
 # =================================================
 
 def build_card(title, color, label, conf, proba, acc, rec, prec, f1, class_labels):
@@ -176,6 +176,56 @@ def build_card(title, color, label, conf, proba, acc, rec, prec, f1, class_label
 
 
 # =================================================
+# SKELETON CARD — shown while loading
+# =================================================
+
+def build_skeleton_card(title, color):
+    """Placeholder card with animated shimmer shown during prediction."""
+    shimmer_bar = (
+        '<div style="height:{h}px;border-radius:8px;background:linear-gradient(90deg,#e0e0e0 25%,#ececec 50%,#e0e0e0 75%);'
+        'background-size:200% 100%;animation:shimmer 1.4s infinite;margin-bottom:{mb}px;width:{w};"></div>'
+    )
+
+    rows = ""
+    for _ in range(3):   # 3 fake probability rows
+        rows += (
+            '<div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;">'
+            + shimmer_bar.format(h=13, mb=0, w="110px")
+            + '<div style="flex:1;height:10px;border-radius:999px;background:#e0e0e0;overflow:hidden;">'
+              '<div style="width:60%;height:100%;border-radius:999px;background:linear-gradient(90deg,#e0e0e0 25%,#ececec 50%,#e0e0e0 75%);'
+              'background-size:200% 100%;animation:shimmer 1.4s infinite;"></div></div>'
+            + shimmer_bar.format(h=13, mb=0, w="36px")
+            + '</div>'
+        )
+
+    metric_rows = ""
+    for _ in range(4):
+        metric_rows += (
+            '<div style="display:flex;justify-content:space-between;margin-bottom:10px;">'
+            + shimmer_bar.format(h=14, mb=0, w="80px")
+            + shimmer_bar.format(h=14, mb=0, w="52px")
+            + '</div>'
+        )
+
+    return (
+        '<style>'
+        '@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }'
+        '</style>'
+        f'<div style="border:2px solid #5a7fc3;border-radius:18px;padding:22px 24px;background:#ececec;font-family:Inter,sans-serif;">'
+        f'<div style="font-size:36px;font-weight:800;color:{color};margin:0 0 18px 0;">{title}</div>'
+        + shimmer_bar.format(h=32, mb=6, w="60%;margin:0 auto;")
+        + shimmer_bar.format(h=14, mb=20, w="40%;margin:0 auto;")
+        + '<hr style="border:none;border-top:1.5px solid #d0d0d0;margin:0 0 12px 0;">'
+        + shimmer_bar.format(h=11, mb=10, w="120px")
+        + rows
+        + '<hr style="border:none;border-top:1.5px solid #d0d0d0;margin:14px 0 12px 0;">'
+        + shimmer_bar.format(h=11, mb=12, w="140px")
+        + f'<div style="display:grid;grid-template-columns:1fr 1fr;column-gap:16px;">{metric_rows}</div>'
+        + '</div>'
+    )
+
+
+# =================================================
 # PAGE STYLES
 # =================================================
 
@@ -204,6 +254,35 @@ header[data-testid="stHeader"] { display:none !important; }
 .audio-player-inline { width:100%; height:34px; border-radius:10px; }
 .audio-close { color:#8f8f8f; margin-left:8px; font-size:36px; font-weight:500; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; opacity:0.75; }
 .audio-close:hover { color:#6f6f6f; opacity:1; }
+
+/* Loading banner */
+.loading-banner {
+    background: linear-gradient(90deg, #274d98, #2e6dd4, #274d98);
+    background-size: 200% 100%;
+    animation: bannerMove 2s linear infinite;
+    border-radius: 12px;
+    padding: 18px 28px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+.loading-banner-text {
+    color: #fff;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+}
+.loading-dot {
+    width: 12px; height: 12px; border-radius: 50%; background: #fff;
+    animation: dotPulse 1.2s ease-in-out infinite;
+    flex-shrink: 0;
+}
+.loading-dot:nth-child(2) { animation-delay: 0.2s; }
+.loading-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes bannerMove { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+@keyframes dotPulse { 0%,100%{opacity:0.3;transform:scale(0.8)} 50%{opacity:1;transform:scale(1.2)} }
+@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 </style>
 """, unsafe_allow_html=True)
 
@@ -238,64 +317,100 @@ with top_mid:
 
 st.markdown("<div style='height:24px;'></div>", unsafe_allow_html=True)
 
-bottom_left, bottom_right = st.columns([1, 1], gap="large")
-
 # =================================================
 # AVALINGUO (AAD) — 3 Classes
 # =================================================
 
 if st.session_state.dataset == "Avalinguo":
-    with st.spinner("🔄 Extracting features and classifying..."):
-        try:
-            label_b, conf_b, proba_b, label_p, conf_p, proba_p = predict_aad(uploaded_audio_data["bytes"])
-            predict_error = None
-        except Exception as e:
-            predict_error = str(e)
+
+    # Show skeleton cards immediately while predicting
+    bottom_left, bottom_right = st.columns([1, 1], gap="large")
+    left_slot  = bottom_left.empty()
+    right_slot = bottom_right.empty()
+
+    left_slot.markdown(build_skeleton_card("Baseline SVM", "#37c424"), unsafe_allow_html=True)
+    right_slot.markdown(build_skeleton_card("Proposed SVM", "#ff1f4e"), unsafe_allow_html=True)
+
+    # Loading banner above the cards
+    banner_slot = st.empty()
+    banner_slot.markdown(
+        '<div class="loading-banner">'
+        '<div class="loading-dot"></div><div class="loading-dot"></div><div class="loading-dot"></div>'
+        '<span class="loading-banner-text">Extracting MFCC features and classifying your audio…</span>'
+        '</div>',
+        unsafe_allow_html=True,
+    )
+
+    try:
+        label_b, conf_b, proba_b, label_p, conf_p, proba_p = predict_aad(uploaded_audio_data["bytes"])
+        predict_error = None
+    except Exception as e:
+        predict_error = str(e)
+
+    # Clear loading banner
+    banner_slot.empty()
 
     if predict_error:
+        left_slot.empty()
+        right_slot.empty()
         st.error(f"Prediction failed: {predict_error}")
     else:
-        with bottom_left:
-            st.markdown(build_card(
-                "Baseline SVM", "#37c424",
-                label_b, conf_b, proba_b,
-                "82.09%", "82.09%", "82.34%", "82.06%",
-                AAD_CLASS_LABELS
-            ), unsafe_allow_html=True)
-        with bottom_right:
-            st.markdown(build_card(
-                "Proposed SVM", "#ff1f4e",
-                label_p, conf_p, proba_p,
-                "85.39%", "85.39%", "85.52%", "85.38%",
-                AAD_CLASS_LABELS
-            ), unsafe_allow_html=True)
+        left_slot.markdown(build_card(
+            "Baseline SVM", "#37c424",
+            label_b, conf_b, proba_b,
+            "82.09%", "82.09%", "82.34%", "82.06%",
+            AAD_CLASS_LABELS
+        ), unsafe_allow_html=True)
+        right_slot.markdown(build_card(
+            "Proposed SVM", "#ff1f4e",
+            label_p, conf_p, proba_p,
+            "85.39%", "85.39%", "85.52%", "85.38%",
+            AAD_CLASS_LABELS
+        ), unsafe_allow_html=True)
 
 # =================================================
 # SPEECHOCEAN (SO762) — 4 Classes
 # =================================================
 
 else:
-    with st.spinner("🔄 Extracting features and classifying..."):
-        try:
-            label_b, conf_b, proba_b, label_p, conf_p, proba_p = predict_so762(uploaded_audio_data["bytes"])
-            predict_error = None
-        except Exception as e:
-            predict_error = str(e)
+    bottom_left, bottom_right = st.columns([1, 1], gap="large")
+    left_slot  = bottom_left.empty()
+    right_slot = bottom_right.empty()
+
+    left_slot.markdown(build_skeleton_card("Baseline SVM", "#37c424"), unsafe_allow_html=True)
+    right_slot.markdown(build_skeleton_card("Proposed SVM", "#ff1f4e"), unsafe_allow_html=True)
+
+    banner_slot = st.empty()
+    banner_slot.markdown(
+        '<div class="loading-banner">'
+        '<div class="loading-dot"></div><div class="loading-dot"></div><div class="loading-dot"></div>'
+        '<span class="loading-banner-text">Extracting MFCC features and classifying your audio…</span>'
+        '</div>',
+        unsafe_allow_html=True,
+    )
+
+    try:
+        label_b, conf_b, proba_b, label_p, conf_p, proba_p = predict_so762(uploaded_audio_data["bytes"])
+        predict_error = None
+    except Exception as e:
+        predict_error = str(e)
+
+    banner_slot.empty()
 
     if predict_error:
+        left_slot.empty()
+        right_slot.empty()
         st.error(f"Prediction failed: {predict_error}")
     else:
-        with bottom_left:
-            st.markdown(build_card(
-                "Baseline SVM", "#37c424",
-                label_b, conf_b, proba_b,
-                "70.52%", "70.52%", "69.90%", "68.25%",   # ← replace with your actual metrics
-                SO762_CLASS_LABELS
-            ), unsafe_allow_html=True)
-        with bottom_right:
-            st.markdown(build_card(
-                "Proposed SVM", "#ff1f4e",
-                label_p, conf_p, proba_p,
-                "72.32%", "72.32%", "69.90%", "70.20%",   # ← replace with your actual metrics
-                SO762_CLASS_LABELS
-            ), unsafe_allow_html=True)
+        left_slot.markdown(build_card(
+            "Baseline SVM", "#37c424",
+            label_b, conf_b, proba_b,
+            "70.52%", "70.52%", "69.90%", "68.25%",
+            SO762_CLASS_LABELS
+        ), unsafe_allow_html=True)
+        right_slot.markdown(build_card(
+            "Proposed SVM", "#ff1f4e",
+            label_p, conf_p, proba_p,
+            "72.32%", "72.32%", "69.90%", "70.20%",
+            SO762_CLASS_LABELS
+        ), unsafe_allow_html=True)
