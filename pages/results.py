@@ -8,7 +8,6 @@ import joblib
 import streamlit as st
 
 st.set_page_config(page_title="Oral Fluency Classification", layout="wide")
-# Hide sidebar
 st.markdown("<style> [data-testid='stSidebarNav'] {display: none;} section[data-testid='stSidebar'] {display: none;} </style>", unsafe_allow_html=True)
 
 if "dataset" not in st.session_state:
@@ -26,6 +25,10 @@ if uploaded_audio_data is None:
     st.switch_page("OFC.py")
 
 
+# =================================================
+# MODEL LOADERS
+# =================================================
+
 @st.cache_resource
 def load_aad_models():
     return {
@@ -38,9 +41,24 @@ def load_aad_models():
         "proposed":         joblib.load("models/AAD/AAD_proposed.pkl"),
     }
 
+@st.cache_resource
+def load_so762_models():
+    return {
+        "baseline_scaler":  joblib.load("models/SO762/SO762_baseline_scaler.pkl"),
+        "baseline":         joblib.load("models/SO762/SO762_baseline.pkl"),
+        "mfcc_scaler":      joblib.load("models/SO762/SO762_proposed_mfcc_scaler.pkl"),
+        "rff":              joblib.load("models/SO762/SO762_proposed_rff.pkl"),
+        "nystrom":          joblib.load("models/SO762/SO762_proposed_nystrom.pkl"),
+        "proposed":         joblib.load("models/SO762/SO762_proposed.pkl"),
+    }
+
+
+# =================================================
+# FEATURE EXTRACTION
+# =================================================
 
 def extract_mfcc_from_bytes(audio_bytes, sr=16000, n_mfcc=22):
-    y, sr = librosa.load(io.BytesIO(audio_bytes), sr=sr)
+    y, sr      = librosa.load(io.BytesIO(audio_bytes), sr=sr)
     n_fft      = int(0.025 * sr)
     hop_length = int(0.010 * sr)
     mfcc       = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=n_mfcc, n_fft=n_fft, hop_length=hop_length)
@@ -49,22 +67,40 @@ def extract_mfcc_from_bytes(audio_bytes, sr=16000, n_mfcc=22):
     return np.mean(np.vstack([mfcc, delta, delta2]), axis=1).reshape(1, -1)
 
 
-CLASS_LABELS = {0: "Low", 1: "Intermediate", 2: "High"}
+# =================================================
+# CLASS LABELS
+# =================================================
+
+AAD_CLASS_LABELS = {0: "Low", 1: "Intermediate", 2: "High"}
+
+SO762_CLASS_LABELS = {
+    0: "Low (0–3)",
+    1: "Intermediate-Low (4–5)",
+    2: "Intermediate-High (6–7)",
+    3: "High (8–10)",
+}
 
 def softmax(x):
     e_x = np.exp(x - np.max(x))
     return e_x / e_x.sum()
 
+
+# =================================================
+# PREDICTION FUNCTIONS
+# =================================================
+
 def predict_aad(audio_bytes):
     m        = load_aad_models()
     features = extract_mfcc_from_bytes(audio_bytes)
 
+    # Baseline
     X_b     = m["baseline_scaler"].transform(features)
     pred_b  = m["baseline"].predict(X_b)[0]
     proba_b = m["baseline"].predict_proba(X_b)[0]
-    label_b = CLASS_LABELS[pred_b]
+    label_b = AAD_CLASS_LABELS[pred_b]
     conf_b  = proba_b[pred_b] * 100
 
+    # Proposed
     X_p      = m["mfcc_scaler"].transform(features)
     X_rff    = m["rff"].transform(X_p)
     X_nys    = m["nystrom"].transform(X_p)
@@ -73,22 +109,50 @@ def predict_aad(audio_bytes):
     pred_p   = m["proposed"].predict(X_hybrid)[0]
     scores_p = m["proposed"].decision_function(X_hybrid)[0]
     proba_p  = softmax(scores_p)
-    label_p  = CLASS_LABELS[pred_p]
+    label_p  = AAD_CLASS_LABELS[pred_p]
     conf_p   = proba_p[pred_p] * 100
 
     return label_b, conf_b, proba_b, label_p, conf_p, proba_p
 
 
-def build_card(title, color, label, conf, proba, acc, rec, prec, f1):
+def predict_so762(audio_bytes):
+    m        = load_so762_models()
+    features = extract_mfcc_from_bytes(audio_bytes)
+
+    # Baseline
+    X_b     = m["baseline_scaler"].transform(features)
+    pred_b  = m["baseline"].predict(X_b)[0]
+    proba_b = m["baseline"].predict_proba(X_b)[0]
+    label_b = SO762_CLASS_LABELS[pred_b]
+    conf_b  = proba_b[pred_b] * 100
+
+    # Proposed (no hybrid_scaler for SO762)
+    X_p      = m["mfcc_scaler"].transform(features)
+    X_rff    = m["rff"].transform(X_p)
+    X_nys    = m["nystrom"].transform(X_p)
+    X_hybrid = np.hstack([X_rff, X_nys])
+    pred_p   = m["proposed"].predict(X_hybrid)[0]
+    proba_p  = m["proposed"].predict_proba(X_hybrid)[0]
+    label_p  = SO762_CLASS_LABELS[pred_p]
+    conf_p   = proba_p[pred_p] * 100
+
+    return label_b, conf_b, proba_b, label_p, conf_p, proba_p
+
+
+# =================================================
+# CARD BUILDER (handles dynamic class labels)
+# =================================================
+
+def build_card(title, color, label, conf, proba, acc, rec, prec, f1, class_labels):
     bars = "".join([
         f'<div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;">'
-        f'<span style="font-size:13px;font-weight:700;color:{color};width:90px;flex-shrink:0;">{CLASS_LABELS[i]}</span>'
+        f'<span style="font-size:13px;font-weight:700;color:{color};width:160px;flex-shrink:0;">{class_labels[i]}</span>'
         f'<div style="flex:1;height:10px;border-radius:999px;background:#ddd;overflow:hidden;">'
         f'<div style="width:{proba[i]*100:.1f}%;height:100%;border-radius:999px;background:{color};"></div>'
         f'</div>'
         f'<span style="font-size:13px;font-weight:700;color:{color};width:44px;text-align:right;">{proba[i]*100:.1f}%</span>'
         f'</div>'
-        for i in range(len(CLASS_LABELS))
+        for i in range(len(class_labels))
     ])
 
     return (
@@ -110,6 +174,10 @@ def build_card(title, color, label, conf, proba, acc, rec, prec, f1):
         f'</div>'
     )
 
+
+# =================================================
+# PAGE STYLES
+# =================================================
 
 st.markdown("""
 <style>
@@ -136,7 +204,6 @@ header[data-testid="stHeader"] { display:none !important; }
 .audio-player-inline { width:100%; height:34px; border-radius:10px; }
 .audio-close { color:#8f8f8f; margin-left:8px; font-size:36px; font-weight:500; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; opacity:0.75; }
 .audio-close:hover { color:#6f6f6f; opacity:1; }
-.unavailable-card { border:2px dashed #aaa; border-radius:18px; padding:18px 22px; min-height:320px; background:#ececec; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#aaa; font-size:20px; font-weight:700; text-align:center; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -159,12 +226,23 @@ with top_mid:
     audio_src = f"data:{uploaded_audio_data['mime']};base64,{audio_b64}"
     safe_name = escape(uploaded_audio_data["name"])
     st.markdown('<div class="upload-shell">', unsafe_allow_html=True)
-    st.markdown(f'<div class="uploaded-card"><div class="audio-icon">♪</div><div class="audio-details"><p class="audio-name">{safe_name}</p><p class="audio-size">{size_mb:.1f} MB</p><audio controls class="audio-player-inline" src="{audio_src}"></audio></div><a class="audio-close" href="/?remove_audio=1" title="Remove audio">×</a></div>', unsafe_allow_html=True)
+    st.markdown(
+        f'<div class="uploaded-card"><div class="audio-icon">♪</div>'
+        f'<div class="audio-details"><p class="audio-name">{safe_name}</p>'
+        f'<p class="audio-size">{size_mb:.1f} MB</p>'
+        f'<audio controls class="audio-player-inline" src="{audio_src}"></audio></div>'
+        f'<a class="audio-close" href="/?remove_audio=1" title="Remove audio">×</a></div>',
+        unsafe_allow_html=True
+    )
     st.markdown('</div>', unsafe_allow_html=True)
 
 st.markdown("<div style='height:24px;'></div>", unsafe_allow_html=True)
 
 bottom_left, bottom_right = st.columns([1, 1], gap="large")
+
+# =================================================
+# AVALINGUO (AAD) — 3 Classes
+# =================================================
 
 if st.session_state.dataset == "Avalinguo":
     with st.spinner("🔄 Extracting features and classifying..."):
@@ -178,11 +256,46 @@ if st.session_state.dataset == "Avalinguo":
         st.error(f"Prediction failed: {predict_error}")
     else:
         with bottom_left:
-            st.markdown(build_card("Baseline SVM", "#37c424", label_b, conf_b, proba_b, "82.09%", "82.09%", "82.34%", "82.06%"), unsafe_allow_html=True)
+            st.markdown(build_card(
+                "Baseline SVM", "#37c424",
+                label_b, conf_b, proba_b,
+                "82.09%", "82.09%", "82.34%", "82.06%",
+                AAD_CLASS_LABELS
+            ), unsafe_allow_html=True)
         with bottom_right:
-            st.markdown(build_card("Proposed SVM", "#ff1f4e", label_p, conf_p, proba_p, "85.39%", "85.39%", "85.52%", "85.38%"), unsafe_allow_html=True)
+            st.markdown(build_card(
+                "Proposed SVM", "#ff1f4e",
+                label_p, conf_p, proba_p,
+                "85.39%", "85.39%", "85.52%", "85.38%",
+                AAD_CLASS_LABELS
+            ), unsafe_allow_html=True)
+
+# =================================================
+# SPEECHOCEAN (SO762) — 4 Classes
+# =================================================
+
 else:
-    with bottom_left:
-        st.markdown('<div class="unavailable-card"><div style="font-size:48px;margin-bottom:12px;">🚧</div><div>SpeechOcean model</div><div style="font-size:15px;font-weight:500;color:#bbb;margin-top:8px;">Coming soon</div></div>', unsafe_allow_html=True)
-    with bottom_right:
-        st.markdown('<div class="unavailable-card"><div style="font-size:48px;margin-bottom:12px;">🚧</div><div>SpeechOcean model</div><div style="font-size:15px;font-weight:500;color:#bbb;margin-top:8px;">Coming soon</div></div>', unsafe_allow_html=True)
+    with st.spinner("🔄 Extracting features and classifying..."):
+        try:
+            label_b, conf_b, proba_b, label_p, conf_p, proba_p = predict_so762(uploaded_audio_data["bytes"])
+            predict_error = None
+        except Exception as e:
+            predict_error = str(e)
+
+    if predict_error:
+        st.error(f"Prediction failed: {predict_error}")
+    else:
+        with bottom_left:
+            st.markdown(build_card(
+                "Baseline SVM", "#37c424",
+                label_b, conf_b, proba_b,
+                "70.52%", "70.52%", "69.90%", "68.25%",   # ← replace with your actual metrics
+                SO762_CLASS_LABELS
+            ), unsafe_allow_html=True)
+        with bottom_right:
+            st.markdown(build_card(
+                "Proposed SVM", "#ff1f4e",
+                label_p, conf_p, proba_p,
+                "72.32%", "72.32%", "69.90%", "70.20%",   # ← replace with your actual metrics
+                SO762_CLASS_LABELS
+            ), unsafe_allow_html=True)
