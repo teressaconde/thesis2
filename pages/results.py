@@ -187,7 +187,7 @@ def build_skeleton_card(title, color):
     )
 
     rows = ""
-    for _ in range(3):   # 3 fake probability rows
+    for _ in range(3):
         rows += (
             '<div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;">'
             + shimmer_bar.format(h=13, mb=0, w="110px")
@@ -323,7 +323,6 @@ st.markdown("<div style='height:24px;'></div>", unsafe_allow_html=True)
 
 if st.session_state.dataset == "Avalinguo":
 
-    # Show skeleton cards immediately while predicting
     bottom_left, bottom_right = st.columns([1, 1], gap="large")
     left_slot  = bottom_left.empty()
     right_slot = bottom_right.empty()
@@ -331,7 +330,6 @@ if st.session_state.dataset == "Avalinguo":
     left_slot.markdown(build_skeleton_card("Baseline SVM", "#37c424"), unsafe_allow_html=True)
     right_slot.markdown(build_skeleton_card("Proposed SVM", "#ff1f4e"), unsafe_allow_html=True)
 
-    # Loading banner above the cards
     banner_slot = st.empty()
     banner_slot.markdown(
         '<div class="loading-banner">'
@@ -347,7 +345,6 @@ if st.session_state.dataset == "Avalinguo":
     except Exception as e:
         predict_error = str(e)
 
-    # Clear loading banner
     banner_slot.empty()
 
     if predict_error:
@@ -414,3 +411,18 @@ else:
             "72.32%", "72.32%", "69.90%", "70.20%",
             SO762_CLASS_LABELS
         ), unsafe_allow_html=True)
+
+
+# =================================================
+# ANALYZE ANOTHER AUDIO BUTTON
+# =================================================
+
+st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
+
+_, btn_col, _ = st.columns([3.5, 4, 3.5])
+with btn_col:
+    if st.button("Analyze Another Audio", type="secondary", use_container_width=True):
+        st.session_state.pop("uploaded_audio_obj", None)
+        st.session_state.pop("uploaded_audio_data", None)
+        st.session_state.pop("audio_uploader", None)
+        st.switch_page("OFC.py")
