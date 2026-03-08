@@ -180,14 +180,13 @@ def build_card(title, color, label, conf, proba, acc, rec, prec, f1, class_label
 # =================================================
 
 def build_skeleton_card(title, color):
-    """Placeholder card with animated shimmer shown during prediction."""
     shimmer_bar = (
         '<div style="height:{h}px;border-radius:8px;background:linear-gradient(90deg,#e0e0e0 25%,#ececec 50%,#e0e0e0 75%);'
         'background-size:200% 100%;animation:shimmer 1.4s infinite;margin-bottom:{mb}px;width:{w};"></div>'
     )
 
     rows = ""
-    for _ in range(3):
+    for _ in range(4):
         rows += (
             '<div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;">'
             + shimmer_bar.format(h=13, mb=0, w="110px")
@@ -399,16 +398,19 @@ else:
         right_slot.empty()
         st.error(f"Prediction failed: {predict_error}")
     else:
+        # Metrics from official SO762 evaluation
+        # Baseline:  Acc=70.52%, Rec(W)=70.52%, Prec(W)=67.43%, F1(W)=68.25%
+        # Proposed:  Acc=72.68%, Rec(W)=72.68%, Prec(W)=70.14%, F1(W)=70.30%
         left_slot.markdown(build_card(
             "Baseline SVM", "#37c424",
             label_b, conf_b, proba_b,
-            "70.52%", "70.52%", "69.90%", "68.25%",
+            "70.52%", "70.52%", "67.43%", "68.25%",
             SO762_CLASS_LABELS
         ), unsafe_allow_html=True)
         right_slot.markdown(build_card(
             "Proposed SVM", "#ff1f4e",
             label_p, conf_p, proba_p,
-            "72.32%", "72.32%", "69.90%", "70.20%",
+            "72.68%", "72.68%", "70.14%", "70.30%",
             SO762_CLASS_LABELS
         ), unsafe_allow_html=True)
 
