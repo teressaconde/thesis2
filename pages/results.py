@@ -327,7 +327,7 @@ if st.session_state.dataset == "Avalinguo":
     right_slot = bottom_right.empty()
 
     left_slot.markdown(build_skeleton_card("Baseline SVM", "#37c424"), unsafe_allow_html=True)
-    right_slot.markdown(build_skeleton_card("Proposed SVM", "#ff1f4e"), unsafe_allow_html=True)
+    right_slot.markdown(build_skeleton_card("Proposed SVM", "#2e56a4"), unsafe_allow_html=True)
 
     banner_slot = st.empty()
     banner_slot.markdown(
@@ -358,7 +358,7 @@ if st.session_state.dataset == "Avalinguo":
             AAD_CLASS_LABELS
         ), unsafe_allow_html=True)
         right_slot.markdown(build_card(
-            "Proposed SVM", "#ff1f4e",
+            "Proposed SVM", "#2e56a4",
             label_p, conf_p, proba_p,
             "85.39%", "85.39%", "85.52%", "85.38%",
             AAD_CLASS_LABELS
@@ -374,7 +374,7 @@ else:
     right_slot = bottom_right.empty()
 
     left_slot.markdown(build_skeleton_card("Baseline SVM", "#37c424"), unsafe_allow_html=True)
-    right_slot.markdown(build_skeleton_card("Proposed SVM", "#ff1f4e"), unsafe_allow_html=True)
+    right_slot.markdown(build_skeleton_card("Proposed SVM", "#2e56a4"), unsafe_allow_html=True)
 
     banner_slot = st.empty()
     banner_slot.markdown(
@@ -398,9 +398,6 @@ else:
         right_slot.empty()
         st.error(f"Prediction failed: {predict_error}")
     else:
-        # Metrics from official SO762 evaluation
-        # Baseline:  Acc=70.52%, Rec(W)=70.52%, Prec(W)=67.43%, F1(W)=68.25%
-        # Proposed:  Acc=72.68%, Rec(W)=72.68%, Prec(W)=70.14%, F1(W)=70.30%
         left_slot.markdown(build_card(
             "Baseline SVM", "#37c424",
             label_b, conf_b, proba_b,
@@ -408,7 +405,7 @@ else:
             SO762_CLASS_LABELS
         ), unsafe_allow_html=True)
         right_slot.markdown(build_card(
-            "Proposed SVM", "#ff1f4e",
+            "Proposed SVM", "#2e56a4",
             label_p, conf_p, proba_p,
             "72.68%", "72.68%", "70.14%", "70.30%",
             SO762_CLASS_LABELS

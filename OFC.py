@@ -304,8 +304,8 @@ st.markdown(
         line-height: 1;
     }
 
-    .result-title-red {
-        color: #ff1f4e !important;
+    .result-title-blue {
+        color: #2e56a4 !important;
         font-size: 40px;
         font-weight: 800;
         margin: 0 0 28px 0;
@@ -322,8 +322,8 @@ st.markdown(
         word-spacing: normal;
     }
 
-    .result-text-red {
-        color: #ff1f4e !important;
+    .result-text-blue {
+        color: #2e56a4 !important;
         font-size: 22px;
         line-height: 1.35;
         font-weight: 500;
@@ -332,12 +332,11 @@ st.markdown(
         word-spacing: normal;
     }
 
-    /* FIX 1: Was 90px — should be 900px for a meaningful responsive breakpoint */
     @media (max-width: 900px) {
         .header-title { font-size: 38px; }
         .stButton > button { font-size: 15px; }
-        .result-title-green, .result-title-red { font-size: 36px; }
-        .result-text-green, .result-text-red { font-size: 18px; }
+        .result-title-green, .result-title-blue { font-size: 36px; }
+        .result-text-green, .result-text-blue { font-size: 18px; }
         .audio-name { font-size: 26px; }
     }
     </style>
@@ -453,8 +452,8 @@ with bottom_right:
     st.markdown(
         """
         <div class="result-card">
-            <h2 class="result-title-red">Proposed SVM</h2>
-            <p class="result-text-red">
+            <h2 class="result-title-blue">Proposed SVM</h2>
+            <p class="result-text-blue">
                 These features are mapped into a hybrid feature space using Random Fourier Features
                 and the Nyström method to efficiently represent non-linear speech patterns.
                 The resulting features are then passed to an SVM classifier trained using Sequential
