@@ -121,18 +121,23 @@ def predict_so762(audio_bytes):
 
     # Baseline
     X_b     = m["baseline_scaler"].transform(features)
-    pred_b  = m["baseline"].predict(X_b)[0]
     proba_b = m["baseline"].predict_proba(X_b)[0]
+    # Use argmax so the predicted label always matches the highest
+    # probability bar in the UI. SVC with probability=True uses Platt
+    # scaling which can cause model.predict() to disagree with the
+    # highest proba — argmax fixes this display inconsistency.
+    pred_b  = int(np.argmax(proba_b))
     label_b = SO762_CLASS_LABELS[pred_b]
     conf_b  = proba_b[pred_b] * 100
 
-    # Proposed (no hybrid_scaler for SO762)
+    # Proposed
     X_p      = m["mfcc_scaler"].transform(features)
     X_rff    = m["rff"].transform(X_p)
     X_nys    = m["nystrom"].transform(X_p)
     X_hybrid = np.hstack([X_rff, X_nys])
-    pred_p   = m["proposed"].predict(X_hybrid)[0]
     proba_p  = m["proposed"].predict_proba(X_hybrid)[0]
+    # Same argmax approach for consistency
+    pred_p   = int(np.argmax(proba_p))
     label_p  = SO762_CLASS_LABELS[pred_p]
     conf_p   = proba_p[pred_p] * 100
 
