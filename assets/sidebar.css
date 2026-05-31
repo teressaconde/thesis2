@@ -1,0 +1,346 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+/* =========================
+   STREAMLIT BASE
+========================= */
+
+header[data-testid="stHeader"],
+footer {
+    display: none !important;
+}
+
+/* Hide Streamlit sidebar collapse / expand button */
+button[kind="header"],
+[data-testid="collapsedControl"],
+[data-testid="stSidebarCollapseButton"],
+[data-testid="stSidebarCollapsedControl"],
+button[title="View fullscreen"],
+button[title="Exit fullscreen"] {
+    display: none !important;
+}
+
+/* Hide Streamlit default multipage navigation only */
+[data-testid="stSidebarNav"] {
+    display: none !important;
+}
+
+html,
+body,
+.stApp {
+    background: #f3f7fc !important;
+    font-family: 'Inter', sans-serif !important;
+    color: #0b1738 !important;
+}
+
+.block-container {
+    max-width: 100% !important;
+    padding: 2rem 2.5rem !important;
+    color: #0b1738 !important;
+}
+
+/* Make main page text visible */
+.block-container,
+.block-container p,
+.block-container span,
+.block-container div,
+.block-container h1,
+.block-container h2,
+.block-container h3,
+.block-container h4,
+.block-container h5,
+.block-container h6,
+.block-container label {
+    color: #0b1738 !important;
+}
+
+
+/* =========================
+   REAL STREAMLIT SIDEBAR
+========================= */
+
+/* Do NOT hide the real sidebar */
+section[data-testid="stSidebar"] {
+    display: block !important;
+    width: 340px !important;
+    min-width: 340px !important;
+    max-width: 340px !important;
+    background: linear-gradient(180deg, #082a75 0%, #061a4a 100%) !important;
+    border-right: none !important;
+}
+
+section[data-testid="stSidebar"] > div {
+    background: linear-gradient(180deg, #082a75 0%, #061a4a 100%) !important;
+    padding: 0 18px 22px 18px !important;
+}
+
+/* Make sidebar content full height */
+section[data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
+    gap: 0.45rem !important;
+}
+
+/* Keep sidebar text white */
+section[data-testid="stSidebar"],
+section[data-testid="stSidebar"] p,
+section[data-testid="stSidebar"] span,
+section[data-testid="stSidebar"] div,
+section[data-testid="stSidebar"] h1,
+section[data-testid="stSidebar"] h2,
+section[data-testid="stSidebar"] h3,
+section[data-testid="stSidebar"] label {
+    color: #ffffff !important;
+}
+
+
+/* =========================
+   SIDEBAR BRAND
+========================= */
+
+.sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 0px;
+    margin-bottom: 46px;
+    color: #ffffff !important;
+}
+
+.sidebar-logo {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    display: grid;
+    place-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    font-size: 28px;
+    flex-shrink: 0;
+}
+
+.sidebar-title {
+    color: #ffffff !important;
+    font-size: 20px !important;
+    font-weight: 900 !important;
+    line-height: 1.15 !important;
+    margin: 0 !important;
+}
+
+.sidebar-subtitle {
+    color: rgba(255, 255, 255, 0.72) !important;
+    font-size: 12px !important;
+    line-height: 1.35 !important;
+    margin-top: 5px !important;
+}
+
+
+/* =========================
+   SIDEBAR BUTTONS
+========================= */
+
+section[data-testid="stSidebar"] div[data-testid="stButton"] {
+    margin-bottom: 8px !important;
+}
+
+section[data-testid="stSidebar"] div[data-testid="stButton"] > button {
+    width: 100% !important;
+    height: 52px !important;
+    min-height: 52px !important;
+    border-radius: 12px !important;
+    border: none !important;
+    background: transparent !important;
+    color: rgba(255, 255, 255, 0.86) !important;
+    font-size: 15px !important;
+    font-weight: 750 !important;
+    text-align: left !important;
+    justify-content: flex-start !important;
+    padding: 0 16px !important;
+    box-shadow: none !important;
+}
+
+section[data-testid="stSidebar"] div[data-testid="stButton"] > button:hover {
+    background: rgba(255, 255, 255, 0.10) !important;
+    color: #ffffff !important;
+}
+
+/* Active sidebar button */
+section[data-testid="stSidebar"] div[data-testid="stButton"] > button[kind="primary"] {
+    background: linear-gradient(135deg, #1f70ff, #0c4bd8) !important;
+    color: #ffffff !important;
+    box-shadow: 0 12px 22px rgba(0, 0, 0, 0.20) !important;
+}
+
+
+/* =========================
+   USER CARD
+========================= */
+
+.sidebar-spacer {
+    height: 80px;
+}
+
+.user-card {
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 70px;
+    margin-bottom: 12px;
+}
+
+.avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    background: #e9f1ff;
+    color: #082a75 !important;
+    font-size: 22px;
+    flex-shrink: 0;
+}
+
+.user-name {
+    font-size: 13px;
+    font-weight: 900;
+    color: #ffffff !important;
+}
+
+.user-email {
+    font-size: 10.5px;
+    color: rgba(255, 255, 255, 0.70) !important;
+    margin-top: 2px;
+}
+
+.online {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: #42ff75 !important;
+    font-size: 11px;
+    font-weight: 700;
+    margin-top: 5px;
+}
+
+.online-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: #42ff75;
+}
+
+
+/* =========================
+   LOGOUT BUTTON
+========================= */
+
+section[data-testid="stSidebar"] div[data-testid="stButton"]:last-of-type > button {
+    border: 1px solid rgba(255, 255, 255, 0.20) !important;
+    background: rgba(255, 255, 255, 0.06) !important;
+    justify-content: center !important;
+    text-align: center !important;
+}
+
+section[data-testid="stSidebar"] div[data-testid="stButton"]:last-of-type > button:hover {
+    background: rgba(255, 255, 255, 0.12) !important;
+}
+
+
+/* =========================
+   MAIN CONTENT BUTTONS
+========================= */
+
+.block-container div[data-testid="stButton"] > button {
+    border-radius: 12px !important;
+    font-weight: 800 !important;
+}
+
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 900px) {
+    section[data-testid="stSidebar"] {
+        width: 300px !important;
+        min-width: 300px !important;
+        max-width: 300px !important;
+    }
+
+    .sidebar-title {
+        font-size: 17px !important;
+    }
+
+    .sidebar-subtitle {
+        font-size: 11px !important;
+    }
+
+    section[data-testid="stSidebar"] div[data-testid="stButton"] > button {
+        font-size: 13px !important;
+        padding: 0 12px !important;
+    }
+
+    .block-container {
+        padding: 1.5rem !important;
+    }
+}
+
+
+.sidebar-nav-links {
+    display: grid;
+    gap: 8px;
+}
+
+.sidebar-link {
+    height: 52px;
+    border-radius: 12px;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    color: rgba(255, 255, 255, 0.82) !important;
+    text-decoration: none !important;
+    font-size: 15px;
+    font-weight: 750;
+    box-sizing: border-box;
+}
+
+.sidebar-link:hover {
+    background: rgba(255, 255, 255, 0.10);
+    color: #ffffff !important;
+}
+
+.sidebar-link.active {
+    background: linear-gradient(135deg, #1f70ff, #0c4bd8);
+    color: #ffffff !important;
+    box-shadow: 0 12px 22px rgba(0, 0, 0, 0.20);
+}
+
+.sidebar-link-icon {
+    width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.sidebar-link-icon svg {
+    width: 24px;
+    height: 24px;
+    display: block;
+}
+
+.user-card {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.user-email {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.70) !important;
+    margin-top: 2px;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}

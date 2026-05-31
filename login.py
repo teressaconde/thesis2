@@ -69,7 +69,7 @@ if "login_error" not in st.session_state:
     st.session_state.login_error = ""
 
 if st.session_state.authenticated:
-    st.switch_page("pages/OFC.py")
+    st.switch_page("pages/dashboard.py")
 
 
 load_css(CSS_FILE)
@@ -139,7 +139,7 @@ with right_col:
         if authenticate(username, password):
             st.session_state.authenticated = True
             st.session_state.login_error = ""
-            st.switch_page("pages/OFC.py")
+            st.switch_page("pages/dashboard.py")
         else:
             st.session_state.login_error = "Invalid username or password."
             st.rerun()
