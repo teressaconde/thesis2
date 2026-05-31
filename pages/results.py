@@ -7,6 +7,10 @@ import librosa
 import joblib
 import streamlit as st
 
+from auth_guard import require_login
+
+require_login()
+
 st.set_page_config(page_title="Oral Fluency Classification", layout="wide")
 st.markdown("<style> [data-testid='stSidebarNav'] {display: none;} section[data-testid='stSidebar'] {display: none;} </style>", unsafe_allow_html=True)
 

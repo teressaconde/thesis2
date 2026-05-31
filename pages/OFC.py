@@ -4,6 +4,9 @@ from html import escape
 
 st.set_page_config(page_title="Oral Fluency Classification", layout="wide")
 
+from auth_guard import require_login
+require_login()
+
 # Hide sidebar
 st.markdown(
     "<style> [data-testid='stSidebarNav'] {display: none;} section[data-testid='stSidebar'] {display: none;} </style>",

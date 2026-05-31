@@ -1,0 +1,439 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+/* =========================
+   STREAMLIT BASE
+========================= */
+
+[data-testid="stSidebar"],
+[data-testid="stSidebarNav"],
+header[data-testid="stHeader"],
+footer {
+    display: none !important;
+}
+
+html,
+body,
+.stApp {
+    background: #eef4fb !important;
+    font-family: 'Inter', sans-serif !important;
+}
+
+.block-container {
+    max-width: 1500px !important;
+    padding: 36px !important;
+    margin: 0 auto !important;
+}
+
+/* Main Streamlit two-column card */
+div[data-testid="stHorizontalBlock"] {
+    background: #ffffff;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 24px 80px rgba(28, 54, 94, 0.18);
+    border: 1px solid rgba(171, 190, 220, 0.55);
+    gap: 0 !important;
+}
+
+div[data-testid="column"] {
+    padding: 0 !important;
+}
+
+/* =========================
+   LEFT BRAND PANEL
+========================= */
+
+.left-panel {
+    min-height: 760px;
+    height: 760px;
+    position: relative;
+    color: #ffffff;
+    padding: 96px 70px 64px;
+    background:
+        radial-gradient(circle at 18% 10%, rgba(69, 143, 255, 0.45), transparent 32%),
+        linear-gradient(135deg, #0d4ed9 0%, #0a318f 48%, #061b50 100%);
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.left-panel::before {
+    content: "";
+    position: absolute;
+    right: -45px;
+    top: 330px;
+    width: 360px;
+    height: 190px;
+    opacity: 0.22;
+    background: repeating-linear-gradient(
+        90deg,
+        transparent 0 18px,
+        rgba(120, 176, 255, 0.92) 18px 23px
+    );
+    border-radius: 28px;
+}
+
+.left-panel::after {
+    content: "";
+    position: absolute;
+    left: -80px;
+    right: -90px;
+    bottom: -20px;
+    height: 250px;
+    opacity: 0.33;
+    background-image: radial-gradient(rgba(92, 157, 255, 0.7) 1px, transparent 1px);
+    background-size: 16px 16px;
+    transform: skewY(-7deg);
+}
+
+.brand-content {
+    position: relative;
+    z-index: 2;
+}
+
+.brain-logo {
+    width: 108px;
+    height: 108px;
+    margin-bottom: 34px;
+}
+
+.brand-title {
+    font-size: 50px;
+    line-height: 1.08;
+    font-weight: 900;
+    letter-spacing: -1.4px;
+    margin: 0 0 18px;
+}
+
+.brand-subtitle {
+    font-size: 20px;
+    color: rgba(255, 255, 255, 0.78);
+    margin-bottom: 30px;
+    font-weight: 500;
+}
+
+.accent-line {
+    width: 62px;
+    height: 4px;
+    border-radius: 999px;
+    background: #3f82ff;
+    margin-bottom: 38px;
+}
+
+.brand-copy {
+    max-width: 520px;
+    font-size: 17px;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 54px;
+}
+
+.feature-card {
+    max-width: 590px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    padding: 24px 20px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.09);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(10px);
+}
+
+.feature-item {
+    text-align: center;
+}
+
+.feature-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    margin: 0 auto 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(38, 101, 255, 0.86);
+    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.2);
+    color: white;
+    font-size: 24px;
+}
+
+.feature-name {
+    font-size: 14px;
+    font-weight: 800;
+    margin-bottom: 6px;
+}
+
+.feature-desc {
+    font-size: 12.5px;
+    line-height: 1.35;
+    color: rgba(255, 255, 255, 0.76);
+}
+
+/* =========================
+   RIGHT STREAMLIT PANEL
+   This styles the actual right Streamlit column
+========================= */
+
+div[data-testid="column"]:has(.right-column-marker) {
+    min-height: 760px;
+    height: 760px;
+    background: linear-gradient(135deg, #ffffff 0%, #fbfdff 100%);
+    padding: 70px 88px !important;
+    position: relative;
+    box-sizing: border-box;
+}
+
+.language-pill {
+    position: absolute;
+    top: 42px;
+    right: 54px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 16px;
+    border-radius: 10px;
+    border: 1px solid #dbe4f2;
+    background: #ffffff;
+    color: #1b2d52;
+    font-size: 15px;
+    font-weight: 800;
+    box-shadow: 0 8px 18px rgba(44, 83, 139, 0.06);
+}
+
+.form-box-streamlit {
+    width: min(100%, 560px);
+    margin: 0 auto 38px auto;
+    padding-top: 110px;
+}
+
+.eyebrow {
+    color: #155dfc !important;
+    font-size: 20px !important;
+    font-weight: 850 !important;
+    margin-bottom: 12px !important;
+}
+
+.login-heading {
+    color: #0b1738 !important;
+    font-size: 41px !important;
+    line-height: 1.12 !important;
+    font-weight: 900 !important;
+    letter-spacing: -1.2px !important;
+    margin: 0 0 18px !important;
+}
+
+.login-support {
+    color: #667390 !important;
+    font-size: 17px !important;
+    line-height: 1.55 !important;
+    margin: 0 0 38px !important;
+}
+
+.field-label {
+    color: #172442;
+    font-size: 14px;
+    font-weight: 800;
+    margin-bottom: 9px;
+}
+
+.alert-box {
+    width: min(100%, 560px);
+    margin: 0 auto 16px auto;
+    background: #fff2f2;
+    color: #b42318;
+    border: 1px solid #ffd6d6;
+    padding: 12px 14px;
+    border-radius: 11px;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+/* =========================
+   STREAMLIT FORM WIDGETS
+========================= */
+
+div[data-testid="stForm"] {
+    width: min(100%, 560px);
+    margin: 0 auto;
+    border: none !important;
+    padding: 0 !important;
+    background: transparent !important;
+}
+
+div[data-testid="stTextInput"] {
+    margin-bottom: 20px !important;
+}
+
+div[data-testid="stTextInput"] label {
+    display: none !important;
+}
+
+div[data-testid="stTextInput"] input {
+    height: 56px !important;
+    border: 1px solid #d5deec !important;
+    border-radius: 11px !important;
+    background: #ffffff !important;
+    color: #172442 !important;
+    font-size: 15px !important;
+    padding-left: 16px !important;
+    box-shadow: 0 6px 18px rgba(27, 68, 132, 0.04) !important;
+}
+
+div[data-testid="stTextInput"] input::placeholder {
+    color: #7c8ba8 !important;
+    opacity: 1 !important;
+}
+
+div[data-testid="stCheckbox"] label {
+    color: #172442 !important;
+    font-weight: 600 !important;
+}
+
+.forgot {
+    color: #155dfc;
+    font-weight: 800;
+    text-decoration: none;
+}
+
+div[data-testid="stFormSubmitButton"] > button {
+    width: 100% !important;
+    height: 62px !important;
+    border-radius: 12px !important;
+    border: none !important;
+    background: linear-gradient(135deg, #1f70ff, #0946d8) !important;
+    color: #ffffff !important;
+    font-size: 16px !important;
+    font-weight: 800 !important;
+    box-shadow: 0 16px 28px rgba(22, 99, 255, 0.24) !important;
+}
+
+.divider {
+    width: min(100%, 560px);
+    margin: 28px auto;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 18px;
+    color: #7a859a;
+    font-size: 15px;
+}
+
+.divider::before,
+.divider::after {
+    content: "";
+    height: 1px;
+    background: #e5ebf4;
+}
+
+div[data-testid="stButton"] {
+    width: min(100%, 560px);
+    margin: 0 auto;
+}
+
+div[data-testid="stButton"] > button {
+    width: 100% !important;
+    height: 58px !important;
+    border-radius: 11px !important;
+    border: 1px solid #d9e2f0 !important;
+    background: #ffffff !important;
+    color: #172442 !important;
+    font-size: 16px !important;
+    font-weight: 800 !important;
+    box-shadow: 0 8px 16px rgba(21, 48, 86, 0.04) !important;
+}
+
+.security-note {
+    width: min(100%, 560px);
+    margin: 44px auto 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 22px 24px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #eef5ff, #f9fbff);
+    color: #52617d;
+    box-sizing: border-box;
+}
+
+.security-icon {
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    background: #dceaff;
+    color: #155dfc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.security-note strong {
+    color: #4a5874;
+    font-size: 15px;
+}
+
+.security-note p {
+    margin: 4px 0 0;
+    font-size: 14px;
+    line-height: 1.45;
+}
+
+.login-footer {
+    text-align: center;
+    color: #78869f;
+    font-size: 14px;
+    margin-top: 28px;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 1100px) {
+    .block-container {
+        padding: 0 !important;
+    }
+
+    div[data-testid="stHorizontalBlock"] {
+        border-radius: 0;
+        box-shadow: none;
+        border: none;
+    }
+
+    .left-panel,
+    div[data-testid="column"]:has(.right-column-marker) {
+        min-height: auto;
+        height: auto;
+    }
+
+    div[data-testid="column"]:has(.right-column-marker) {
+        padding: 80px 50px !important;
+    }
+
+    .form-box-streamlit {
+        padding-top: 40px;
+    }
+}
+
+@media (max-width: 650px) {
+    .left-panel,
+    div[data-testid="column"]:has(.right-column-marker) {
+        padding: 48px 28px !important;
+    }
+
+    .brand-title {
+        font-size: 40px;
+    }
+
+    .login-heading {
+        font-size: 32px !important;
+    }
+
+    .feature-card {
+        grid-template-columns: 1fr;
+    }
+
+    .language-pill {
+        top: 24px;
+        right: 24px;
+    }
+}
