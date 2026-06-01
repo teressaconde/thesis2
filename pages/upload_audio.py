@@ -326,9 +326,17 @@ if classify_clicked:
     if uploaded_file is None:
         st.warning("Please upload an audio file first before preprocessing.")
     else:
-        st.session_state.uploaded_audio = uploaded_file
+        uploaded_file.seek(0)
+        audio_bytes = uploaded_file.read()
+        uploaded_file.seek(0)
+
+        st.session_state.uploaded_audio_data = {
+            "name": uploaded_file.name,
+            "size": uploaded_file.size,
+            "mime": uploaded_file.type or "audio/wav",
+            "bytes": audio_bytes,
+        }
+
         st.session_state.selected_model = selected_dataset
 
-        st.success(
-            f"Ready to classify using {selected_model_text}. Logic/model processing can be connected here."
-        )
+        st.switch_page("pages/results.py")

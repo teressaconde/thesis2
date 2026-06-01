@@ -40,12 +40,9 @@ def render_sidebar(active_page: str = "Dashboard"):
 
         st.page_link("dashboard.py", label="Dashboard", icon=":material/home:")
         st.page_link("pages/upload_audio.py", label="Upload Audio", icon=":material/cloud_upload:")
-        st.page_link("pages/results.py", label="Results", icon=":material/description:")
         st.page_link("pages/model_comparison.py", label="Model Comparison", icon=":material/balance:")
-        st.page_link("pages/analytics.py", label="Analytics", icon=":material/monitoring:")
         st.page_link("pages/datasets.py", label="Datasets", icon=":material/database:")
         st.page_link("pages/workflow.py", label="Workflow", icon=":material/account_tree:")
-        st.page_link("pages/settings.py", label="Settings", icon=":material/settings:")
         st.page_link("pages/about.py", label="About System", icon=":material/info:")
 
         render_html(

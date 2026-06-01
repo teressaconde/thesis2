@@ -1,436 +1,889 @@
 import base64
+import contextlib
 import io
+import wave
 from html import escape
+from pathlib import Path
+from textwrap import dedent
+from datetime import datetime
 
-import numpy as np
-import librosa
 import joblib
+import librosa
+import numpy as np
 import streamlit as st
 
-from auth_guard import require_login
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
+from reportlab.platypus import (
+    SimpleDocTemplate,
+    Paragraph,
+    Spacer,
+    Table,
+    TableStyle,
+)
 
-require_login()
+st.set_page_config(
+    page_title="Classification Results | Oral Fluency Classification",
+    page_icon="✅",
+    layout="wide",
+    initial_sidebar_state="collapsed",
+)
 
-st.set_page_config(page_title="Oral Fluency Classification", layout="wide")
-st.markdown("<style> [data-testid='stSidebarNav'] {display: none;} section[data-testid='stSidebar'] {display: none;} </style>", unsafe_allow_html=True)
+BASE_DIR = Path(__file__).resolve().parent.parent
+RESULTS_CSS = BASE_DIR / "assets" / "results.css"
 
-if "dataset" not in st.session_state:
-    st.session_state.dataset = "Avalinguo"
 
-if str(st.query_params.get("remove_audio", "0")) == "1":
-    st.session_state.pop("uploaded_audio_obj", None)
-    st.session_state.pop("uploaded_audio_data", None)
-    st.session_state.pop("audio_uploader", None)
-    st.query_params.clear()
-    st.switch_page("OFC.py")
+# =========================
+# LOAD CSS / HTML RENDERER
+# =========================
+
+def load_css(path: Path):
+    css = path.read_text(encoding="utf-8")
+    st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
+
+
+def render_html(html: str):
+    html = dedent(html).strip()
+    html = "\n".join(line.lstrip() for line in html.splitlines())
+    st.markdown(html, unsafe_allow_html=True)
+
+
+load_css(RESULTS_CSS)
+
+
+# =========================
+# SESSION DATA
+# =========================
 
 uploaded_audio_data = st.session_state.get("uploaded_audio_data")
+
 if uploaded_audio_data is None:
-    st.switch_page("OFC.py")
+    st.warning("No uploaded audio found. Please upload an audio file first.")
+
+    if st.button("Back to Upload"):
+        st.switch_page("pages/upload_audio.py")
+
+    st.stop()
 
 
-# =================================================
+selected_dataset = st.session_state.get(
+    "selected_model",
+    st.session_state.get("selected_dataset", "AAD"),
+)
+
+if selected_dataset in ["Avalinguo", "AAD", "AAD Model"]:
+    selected_dataset = "AAD"
+else:
+    selected_dataset = "SpeechOcean"
+
+
+# =========================
 # MODEL LOADERS
-# =================================================
+# =========================
 
 @st.cache_resource
 def load_aad_models():
+    model_dir = BASE_DIR / "models" / "AAD"
+
     return {
-        "baseline_scaler":  joblib.load("models/AAD/AAD_baseline_scaler.pkl"),
-        "baseline":         joblib.load("models/AAD/AAD_baseline.pkl"),
-        "mfcc_scaler":      joblib.load("models/AAD/AAD_proposed_mfcc_scaler.pkl"),
-        "rff":              joblib.load("models/AAD/AAD_proposed_rff.pkl"),
-        "nystrom":          joblib.load("models/AAD/AAD_proposed_nystrom.pkl"),
-        "hybrid_scaler":    joblib.load("models/AAD/AAD_proposed_hybrid_scaler.pkl"),
-        "proposed":         joblib.load("models/AAD/AAD_proposed.pkl"),
+        "baseline_scaler": joblib.load(model_dir / "AAD_baseline_scaler.pkl"),
+        "baseline": joblib.load(model_dir / "AAD_baseline.pkl"),
+        "mfcc_scaler": joblib.load(model_dir / "AAD_proposed_mfcc_scaler.pkl"),
+        "rff": joblib.load(model_dir / "AAD_proposed_rff.pkl"),
+        "nystrom": joblib.load(model_dir / "AAD_proposed_nystrom.pkl"),
+        "hybrid_scaler": joblib.load(model_dir / "AAD_proposed_hybrid_scaler.pkl"),
+        "proposed": joblib.load(model_dir / "AAD_proposed.pkl"),
     }
+
 
 @st.cache_resource
 def load_so762_models():
+    model_dir = BASE_DIR / "models" / "SO762"
+
     return {
-        "baseline_scaler":  joblib.load("models/SO762/SO762_baseline_scaler.pkl"),
-        "baseline":         joblib.load("models/SO762/SO762_baseline.pkl"),
-        "mfcc_scaler":      joblib.load("models/SO762/SO762_proposed_mfcc_scaler.pkl"),
-        "rff":              joblib.load("models/SO762/SO762_proposed_rff.pkl"),
-        "nystrom":          joblib.load("models/SO762/SO762_proposed_nystrom.pkl"),
-        "proposed":         joblib.load("models/SO762/SO762_proposed.pkl"),
+        "baseline_scaler": joblib.load(model_dir / "SO762_baseline_scaler.pkl"),
+        "baseline": joblib.load(model_dir / "SO762_baseline.pkl"),
+        "mfcc_scaler": joblib.load(model_dir / "SO762_proposed_mfcc_scaler.pkl"),
+        "rff": joblib.load(model_dir / "SO762_proposed_rff.pkl"),
+        "nystrom": joblib.load(model_dir / "SO762_proposed_nystrom.pkl"),
+        "proposed": joblib.load(model_dir / "SO762_proposed.pkl"),
     }
 
 
-# =================================================
+# =========================
 # FEATURE EXTRACTION
-# =================================================
+# =========================
 
 def extract_mfcc_from_bytes(audio_bytes, sr=16000, n_mfcc=22):
-    y, sr      = librosa.load(io.BytesIO(audio_bytes), sr=sr)
-    n_fft      = int(0.025 * sr)
+    y, sr = librosa.load(io.BytesIO(audio_bytes), sr=sr)
+
+    n_fft = int(0.025 * sr)
     hop_length = int(0.010 * sr)
-    mfcc       = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=n_mfcc, n_fft=n_fft, hop_length=hop_length)
-    delta      = librosa.feature.delta(mfcc)
-    delta2     = librosa.feature.delta(mfcc, order=2)
-    return np.mean(np.vstack([mfcc, delta, delta2]), axis=1).reshape(1, -1)
+
+    mfcc = librosa.feature.mfcc(
+        y=y,
+        sr=sr,
+        n_mfcc=n_mfcc,
+        n_fft=n_fft,
+        hop_length=hop_length,
+    )
+
+    delta = librosa.feature.delta(mfcc)
+    delta2 = librosa.feature.delta(mfcc, order=2)
+
+    features = np.mean(np.vstack([mfcc, delta, delta2]), axis=1)
+
+    return features.reshape(1, -1)
 
 
-# =================================================
+def get_audio_info(audio_bytes, filename):
+    file_ext = filename.split(".")[-1].upper()
+    size_mb = len(audio_bytes) / (1024 * 1024)
+
+    info = {
+        "duration": "Not available",
+        "sample_rate": "Not available",
+        "channels": "Not available",
+        "file_size": f"{size_mb:.2f} MB",
+        "format": file_ext,
+    }
+
+    try:
+        if file_ext.lower() == "wav":
+            with contextlib.closing(wave.open(io.BytesIO(audio_bytes), "rb")) as wav_file:
+                frames = wav_file.getnframes()
+                rate = wav_file.getframerate()
+                channels = wav_file.getnchannels()
+                duration = frames / float(rate)
+
+                info["duration"] = f"{duration:.2f} sec"
+                info["sample_rate"] = f"{rate:,} Hz"
+                info["channels"] = "Mono" if channels == 1 else "Stereo"
+
+        else:
+            y, sr = librosa.load(io.BytesIO(audio_bytes), sr=None)
+            duration = librosa.get_duration(y=y, sr=sr)
+
+            info["duration"] = f"{duration:.2f} sec"
+            info["sample_rate"] = f"{sr:,} Hz"
+            info["channels"] = "Not available"
+
+    except Exception:
+        pass
+
+    return info
+
+
+def make_waveform_svg(audio_bytes):
+    try:
+        y, sr = librosa.load(io.BytesIO(audio_bytes), sr=16000)
+        y = y[: sr * 12]
+
+        if len(y) == 0:
+            return ""
+
+        chunks = np.array_split(y, 140)
+        values = np.array(
+            [np.max(np.abs(chunk)) if len(chunk) else 0 for chunk in chunks]
+        )
+
+        if np.max(values) > 0:
+            values = values / np.max(values)
+
+        bars = []
+        x = 0
+
+        for value in values:
+            height = 8 + value * 58
+            y_pos = 44 - height / 2
+
+            bars.append(
+                f'<rect x="{x}" y="{y_pos:.2f}" width="3" height="{height:.2f}" rx="2" />'
+            )
+
+            x += 5
+
+        return f"""
+        <svg class="waveform-svg" viewBox="0 0 700 88" preserveAspectRatio="none">
+            <g>{''.join(bars)}</g>
+        </svg>
+        """
+
+    except Exception:
+        return """
+        <div class="waveform-placeholder">
+            Waveform preview unavailable
+        </div>
+        """
+
+
+# =========================
 # CLASS LABELS
-# =================================================
+# =========================
 
-AAD_CLASS_LABELS = {0: "Low", 1: "Intermediate", 2: "High"}
+AAD_CLASS_LABELS = {
+    0: "Low",
+    1: "Intermediate",
+    2: "High",
+}
 
 SO762_CLASS_LABELS = {
-    0: "Low (0–3)",
-    1: "Intermediate-Low (4–5)",
-    2: "Intermediate-High (6–7)",
-    3: "High (8–10)",
+    0: "Low",
+    1: "Intermediate-Low",
+    2: "Intermediate-High",
+    3: "High",
 }
+
 
 def softmax(x):
     e_x = np.exp(x - np.max(x))
     return e_x / e_x.sum()
 
 
-# =================================================
+# =========================
 # PREDICTION FUNCTIONS
-# =================================================
+# =========================
 
 def predict_aad(audio_bytes):
-    m        = load_aad_models()
+    models = load_aad_models()
     features = extract_mfcc_from_bytes(audio_bytes)
 
-    # Baseline
-    X_b     = m["baseline_scaler"].transform(features)
-    pred_b  = m["baseline"].predict(X_b)[0]
-    proba_b = m["baseline"].predict_proba(X_b)[0]
-    label_b = AAD_CLASS_LABELS[pred_b]
-    conf_b  = proba_b[pred_b] * 100
+    x_baseline = models["baseline_scaler"].transform(features)
+    pred_baseline = models["baseline"].predict(x_baseline)[0]
+    proba_baseline = models["baseline"].predict_proba(x_baseline)[0]
 
-    # Proposed
-    X_p      = m["mfcc_scaler"].transform(features)
-    X_rff    = m["rff"].transform(X_p)
-    X_nys    = m["nystrom"].transform(X_p)
-    X_hybrid = np.hstack((0.7 * X_rff, 0.3 * X_nys))
-    X_hybrid = m["hybrid_scaler"].transform(X_hybrid)
-    pred_p   = m["proposed"].predict(X_hybrid)[0]
-    scores_p = m["proposed"].decision_function(X_hybrid)[0]
-    proba_p  = softmax(scores_p)
-    label_p  = AAD_CLASS_LABELS[pred_p]
-    conf_p   = proba_p[pred_p] * 100
+    label_baseline = AAD_CLASS_LABELS[pred_baseline]
+    conf_baseline = proba_baseline[pred_baseline] * 100
 
-    return label_b, conf_b, proba_b, label_p, conf_p, proba_p
+    x_proposed = models["mfcc_scaler"].transform(features)
+    x_rff = models["rff"].transform(x_proposed)
+    x_nys = models["nystrom"].transform(x_proposed)
+    x_hybrid = np.hstack((0.7 * x_rff, 0.3 * x_nys))
+    x_hybrid = models["hybrid_scaler"].transform(x_hybrid)
+
+    pred_proposed = models["proposed"].predict(x_hybrid)[0]
+    scores_proposed = models["proposed"].decision_function(x_hybrid)[0]
+    proba_proposed = softmax(scores_proposed)
+
+    label_proposed = AAD_CLASS_LABELS[pred_proposed]
+    conf_proposed = proba_proposed[pred_proposed] * 100
+
+    return {
+        "baseline": {
+            "label": label_baseline,
+            "confidence": conf_baseline,
+            "probabilities": proba_baseline,
+            "metrics": {
+                "Accuracy": "82.09%",
+                "Recall": "82.09%",
+                "Precision": "82.34%",
+                "F1-Score": "82.06%",
+            },
+        },
+        "proposed": {
+            "label": label_proposed,
+            "confidence": conf_proposed,
+            "probabilities": proba_proposed,
+            "metrics": {
+                "Accuracy": "85.39%",
+                "Recall": "85.39%",
+                "Precision": "85.52%",
+                "F1-Score": "85.38%",
+            },
+        },
+        "labels": AAD_CLASS_LABELS,
+    }
 
 
 def predict_so762(audio_bytes):
-    m        = load_so762_models()
+    models = load_so762_models()
     features = extract_mfcc_from_bytes(audio_bytes)
 
-    # Baseline
-    X_b     = m["baseline_scaler"].transform(features)
-    proba_b = m["baseline"].predict_proba(X_b)[0]
-    # Use argmax so the predicted label always matches the highest
-    # probability bar in the UI. SVC with probability=True uses Platt
-    # scaling which can cause model.predict() to disagree with the
-    # highest proba — argmax fixes this display inconsistency.
-    pred_b  = int(np.argmax(proba_b))
-    label_b = SO762_CLASS_LABELS[pred_b]
-    conf_b  = proba_b[pred_b] * 100
+    x_baseline = models["baseline_scaler"].transform(features)
+    proba_baseline = models["baseline"].predict_proba(x_baseline)[0]
+    pred_baseline = int(np.argmax(proba_baseline))
 
-    # Proposed
-    X_p      = m["mfcc_scaler"].transform(features)
-    X_rff    = m["rff"].transform(X_p)
-    X_nys    = m["nystrom"].transform(X_p)
-    X_hybrid = np.hstack([X_rff, X_nys])
-    proba_p  = m["proposed"].predict_proba(X_hybrid)[0]
-    # Same argmax approach for consistency
-    pred_p   = int(np.argmax(proba_p))
-    label_p  = SO762_CLASS_LABELS[pred_p]
-    conf_p   = proba_p[pred_p] * 100
+    label_baseline = SO762_CLASS_LABELS[pred_baseline]
+    conf_baseline = proba_baseline[pred_baseline] * 100
 
-    return label_b, conf_b, proba_b, label_p, conf_p, proba_p
+    x_proposed = models["mfcc_scaler"].transform(features)
+    x_rff = models["rff"].transform(x_proposed)
+    x_nys = models["nystrom"].transform(x_proposed)
+    x_hybrid = np.hstack([x_rff, x_nys])
 
+    proba_proposed = models["proposed"].predict_proba(x_hybrid)[0]
+    pred_proposed = int(np.argmax(proba_proposed))
 
-# =================================================
-# CARD BUILDER
-# =================================================
+    label_proposed = SO762_CLASS_LABELS[pred_proposed]
+    conf_proposed = proba_proposed[pred_proposed] * 100
 
-def build_card(title, color, label, conf, proba, acc, rec, prec, f1, class_labels):
-    bars = "".join([
-        f'<div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;">'
-        f'<span style="font-size:13px;font-weight:700;color:{color};width:160px;flex-shrink:0;">{class_labels[i]}</span>'
-        f'<div style="flex:1;height:10px;border-radius:999px;background:#ddd;overflow:hidden;">'
-        f'<div style="width:{proba[i]*100:.1f}%;height:100%;border-radius:999px;background:{color};"></div>'
-        f'</div>'
-        f'<span style="font-size:13px;font-weight:700;color:{color};width:44px;text-align:right;">{proba[i]*100:.1f}%</span>'
-        f'</div>'
-        for i in range(len(class_labels))
-    ])
-
-    return (
-        f'<div style="border:2px solid #5a7fc3;border-radius:18px;padding:22px 24px;background:#ececec;font-family:Inter,sans-serif;">'
-        f'<div style="font-size:36px;font-weight:800;color:{color};margin:0 0 14px 0;">{title}</div>'
-        f'<div style="font-size:30px;font-weight:800;color:{color};text-align:center;margin:0 0 5px 0;">Result: &nbsp;{label}</div>'
-        f'<div style="font-size:14px;font-weight:600;color:#888;text-align:center;margin:0 0 16px 0;">Confidence: {conf:.1f}%</div>'
-        f'<hr style="border:none;border-top:1.5px solid #d0d0d0;margin:0 0 12px 0;">'
-        f'<div style="font-size:11px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:0.6px;margin:0 0 10px 0;">Class Probabilities</div>'
-        f'{bars}'
-        f'<hr style="border:none;border-top:1.5px solid #d0d0d0;margin:14px 0 12px 0;">'
-        f'<div style="font-size:11px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:0.6px;margin:0 0 12px 0;">Overall Model Metrics</div>'
-        f'<div style="display:grid;grid-template-columns:1fr 1fr;row-gap:10px;column-gap:16px;">'
-        f'<div style="display:flex;justify-content:space-between;font-size:15px;font-weight:700;color:{color};"><span>Accuracy:</span><span>{acc}</span></div>'
-        f'<div style="display:flex;justify-content:space-between;font-size:15px;font-weight:700;color:{color};"><span>Recall:</span><span>{rec}</span></div>'
-        f'<div style="display:flex;justify-content:space-between;font-size:15px;font-weight:700;color:{color};"><span>Precision:</span><span>{prec}</span></div>'
-        f'<div style="display:flex;justify-content:space-between;font-size:15px;font-weight:700;color:{color};"><span>F1-Score:</span><span>{f1}</span></div>'
-        f'</div>'
-        f'</div>'
-    )
+    return {
+        "baseline": {
+            "label": label_baseline,
+            "confidence": conf_baseline,
+            "probabilities": proba_baseline,
+            "metrics": {
+                "Accuracy": "70.52%",
+                "Recall": "70.52%",
+                "Precision": "67.43%",
+                "F1-Score": "68.25%",
+            },
+        },
+        "proposed": {
+            "label": label_proposed,
+            "confidence": conf_proposed,
+            "probabilities": proba_proposed,
+            "metrics": {
+                "Accuracy": "72.68%",
+                "Recall": "72.68%",
+                "Precision": "70.14%",
+                "F1-Score": "70.30%",
+            },
+        },
+        "labels": SO762_CLASS_LABELS,
+    }
 
 
-# =================================================
-# SKELETON CARD — shown while loading
-# =================================================
+# =========================
+# HTML BUILDERS
+# =========================
 
-def build_skeleton_card(title, color):
-    shimmer_bar = (
-        '<div style="height:{h}px;border-radius:8px;background:linear-gradient(90deg,#e0e0e0 25%,#ececec 50%,#e0e0e0 75%);'
-        'background-size:200% 100%;animation:shimmer 1.4s infinite;margin-bottom:{mb}px;width:{w};"></div>'
-    )
+def build_file_info(info, filename):
+    safe_name = escape(filename)
 
+    return f"""
+    <div class="info-table">
+        <div class="info-row">
+            <span>▧ File Name</span>
+            <strong>{safe_name}</strong>
+        </div>
+
+        <div class="info-row">
+            <span>◷ Duration</span>
+            <strong>{info["duration"]}</strong>
+        </div>
+
+        <div class="info-row">
+            <span>≋ Sample Rate</span>
+            <strong>{info["sample_rate"]}</strong>
+        </div>
+
+        <div class="info-row">
+            <span>≡ Channels</span>
+            <strong>{info["channels"]}</strong>
+        </div>
+
+        <div class="info-row">
+            <span>▣ File Size</span>
+            <strong>{info["file_size"]}</strong>
+        </div>
+
+        <div class="info-row">
+            <span>▧ Format</span>
+            <strong>{info["format"]}</strong>
+        </div>
+    </div>
+    """
+
+
+def build_probability_rows(probabilities, labels, color_class):
     rows = ""
-    for _ in range(4):
-        rows += (
-            '<div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;">'
-            + shimmer_bar.format(h=13, mb=0, w="110px")
-            + '<div style="flex:1;height:10px;border-radius:999px;background:#e0e0e0;overflow:hidden;">'
-              '<div style="width:60%;height:100%;border-radius:999px;background:linear-gradient(90deg,#e0e0e0 25%,#ececec 50%,#e0e0e0 75%);'
-              'background-size:200% 100%;animation:shimmer 1.4s infinite;"></div></div>'
-            + shimmer_bar.format(h=13, mb=0, w="36px")
-            + '</div>'
+
+    for index, probability in enumerate(probabilities):
+        label = labels[index]
+        percent = probability * 100
+
+        rows += f"""
+        <div class="prob-row">
+            <span class="prob-label">{label}</span>
+
+            <div class="prob-track">
+                <div class="prob-fill {color_class}" style="width: {percent:.2f}%;"></div>
+            </div>
+
+            <strong>{percent:.2f}%</strong>
+        </div>
+        """
+
+    return rows
+
+
+def build_metric_items(metrics, color_class):
+    icons = {
+        "Accuracy": "◎",
+        "Recall": "↻",
+        "Precision": "◉",
+        "F1-Score": "☆",
+    }
+
+    html = ""
+
+    for name, value in metrics.items():
+        html += f"""
+        <div class="metric-item">
+            <div class="metric-icon {color_class}">{icons.get(name, "•")}</div>
+
+            <div>
+                <span>{name}</span>
+                <strong>{value}</strong>
+            </div>
+        </div>
+        """
+
+    return html
+
+
+def build_result_card(title, badge, result, labels, theme):
+    color_class = "blue" if theme == "blue" else "green"
+
+    return f"""
+    <section class="model-result-card {theme}">
+        <div class="model-result-header">
+            <div class="model-title-wrap">
+                <div class="model-circle {color_class}">≋</div>
+                <h2>{title}</h2>
+            </div>
+
+            <span class="result-badge {color_class}">{badge}</span>
+        </div>
+
+        <div class="model-main-grid">
+            <div class="prediction-box">
+                <span class="box-label">Predicted Fluency Level</span>
+
+                <div class="prediction-row">
+                    <strong class="{color_class}-text">{result["label"]}</strong>
+                    <div class="mini-chart {color_class}">▥</div>
+                </div>
+
+                <span class="confidence-label">Confidence Score</span>
+
+                <div class="confidence-value {color_class}-text">
+                    {result["confidence"]:.2f}%
+                </div>
+
+                <div class="confidence-track">
+                    <div class="confidence-fill {color_class}" style="width: {result["confidence"]:.2f}%;"></div>
+                </div>
+            </div>
+
+            <div class="probability-box">
+                <span class="box-label">Class Probabilities</span>
+                {build_probability_rows(result["probabilities"], labels, color_class)}
+            </div>
+        </div>
+
+        <div class="metric-grid">
+            {build_metric_items(result["metrics"], color_class)}
+        </div>
+    </section>
+    """
+
+
+# =========================
+# PDF GENERATOR
+# =========================
+
+def create_results_pdf(
+    audio_name,
+    audio_info,
+    selected_dataset,
+    prediction_results,
+    summary_plain_text,
+):
+    buffer = io.BytesIO()
+
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        rightMargin=0.55 * inch,
+        leftMargin=0.55 * inch,
+        topMargin=0.55 * inch,
+        bottomMargin=0.55 * inch,
+    )
+
+    styles = getSampleStyleSheet()
+
+    title_style = ParagraphStyle(
+        "CustomTitle",
+        parent=styles["Title"],
+        fontName="Helvetica-Bold",
+        fontSize=20,
+        leading=24,
+        textColor=colors.HexColor("#0b1738"),
+        spaceAfter=8,
+    )
+
+    subtitle_style = ParagraphStyle(
+        "CustomSubtitle",
+        parent=styles["Normal"],
+        fontName="Helvetica",
+        fontSize=10,
+        leading=14,
+        textColor=colors.HexColor("#53627c"),
+        spaceAfter=14,
+    )
+
+    section_style = ParagraphStyle(
+        "SectionTitle",
+        parent=styles["Heading2"],
+        fontName="Helvetica-Bold",
+        fontSize=13,
+        leading=16,
+        textColor=colors.HexColor("#0b1738"),
+        spaceBefore=12,
+        spaceAfter=8,
+    )
+
+    normal_style = ParagraphStyle(
+        "NormalCustom",
+        parent=styles["Normal"],
+        fontName="Helvetica",
+        fontSize=9,
+        leading=13,
+        textColor=colors.HexColor("#0b1738"),
+    )
+
+    story = []
+
+    story.append(Paragraph("Oral Fluency Classification Results", title_style))
+    story.append(
+        Paragraph(
+            f"Generated on {datetime.now().strftime('%B %d, %Y at %I:%M %p')}",
+            subtitle_style,
+        )
+    )
+
+    story.append(Paragraph("Uploaded Audio Information", section_style))
+
+    file_table_data = [
+        ["File Name", audio_name],
+        ["Dataset / Model", selected_dataset],
+        ["Duration", audio_info["duration"]],
+        ["Sample Rate", audio_info["sample_rate"]],
+        ["Channels", audio_info["channels"]],
+        ["File Size", audio_info["file_size"]],
+        ["Format", audio_info["format"]],
+    ]
+
+    file_table = Table(file_table_data, colWidths=[1.8 * inch, 5.0 * inch])
+    file_table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (0, -1), colors.HexColor("#eaf4ff")),
+                ("TEXTCOLOR", (0, 0), (-1, -1), colors.HexColor("#0b1738")),
+                ("FONTNAME", (0, 0), (0, -1), "Helvetica-Bold"),
+                ("FONTNAME", (1, 0), (1, -1), "Helvetica"),
+                ("FONTSIZE", (0, 0), (-1, -1), 9),
+                ("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#dce6f4")),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("ROWBACKGROUNDS", (1, 0), (1, -1), [colors.white, colors.HexColor("#fbfdff")]),
+                ("LEFTPADDING", (0, 0), (-1, -1), 8),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+                ("TOPPADDING", (0, 0), (-1, -1), 7),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 7),
+            ]
+        )
+    )
+
+    story.append(file_table)
+    story.append(Spacer(1, 12))
+
+    labels = prediction_results["labels"]
+
+    for model_key, model_title in [
+        ("baseline", "Baseline Model (SVM)"),
+        ("proposed", "Proposed Model (Hybrid)"),
+    ]:
+        result = prediction_results[model_key]
+
+        story.append(Paragraph(model_title, section_style))
+
+        result_summary = [
+            ["Predicted Fluency Level", result["label"]],
+            ["Confidence Score", f'{result["confidence"]:.2f}%'],
+        ]
+
+        result_table = Table(result_summary, colWidths=[2.2 * inch, 4.6 * inch])
+        result_table.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (0, -1), colors.HexColor("#eef6ff")),
+                    ("FONTNAME", (0, 0), (0, -1), "Helvetica-Bold"),
+                    ("FONTNAME", (1, 0), (1, -1), "Helvetica-Bold"),
+                    ("FONTSIZE", (0, 0), (-1, -1), 10),
+                    ("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#dce6f4")),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 8),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+                    ("TOPPADDING", (0, 0), (-1, -1), 7),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 7),
+                ]
+            )
         )
 
-    metric_rows = ""
-    for _ in range(4):
-        metric_rows += (
-            '<div style="display:flex;justify-content:space-between;margin-bottom:10px;">'
-            + shimmer_bar.format(h=14, mb=0, w="80px")
-            + shimmer_bar.format(h=14, mb=0, w="52px")
-            + '</div>'
+        story.append(result_table)
+        story.append(Spacer(1, 8))
+
+        probability_data = [["Class", "Probability"]]
+        for index, probability in enumerate(result["probabilities"]):
+            probability_data.append([labels[index], f"{probability * 100:.2f}%"])
+
+        probability_table = Table(probability_data, colWidths=[3.4 * inch, 3.4 * inch])
+        probability_table.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0b67f8")),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                    ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
+                    ("FONTSIZE", (0, 0), (-1, -1), 9),
+                    ("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#dce6f4")),
+                    ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#fbfdff")]),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 8),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+                    ("TOPPADDING", (0, 0), (-1, -1), 6),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+                ]
+            )
         )
 
-    return (
-        '<style>'
-        '@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }'
-        '</style>'
-        f'<div style="border:2px solid #5a7fc3;border-radius:18px;padding:22px 24px;background:#ececec;font-family:Inter,sans-serif;">'
-        f'<div style="font-size:36px;font-weight:800;color:{color};margin:0 0 18px 0;">{title}</div>'
-        + shimmer_bar.format(h=32, mb=6, w="60%;margin:0 auto;")
-        + shimmer_bar.format(h=14, mb=20, w="40%;margin:0 auto;")
-        + '<hr style="border:none;border-top:1.5px solid #d0d0d0;margin:0 0 12px 0;">'
-        + shimmer_bar.format(h=11, mb=10, w="120px")
-        + rows
-        + '<hr style="border:none;border-top:1.5px solid #d0d0d0;margin:14px 0 12px 0;">'
-        + shimmer_bar.format(h=11, mb=12, w="140px")
-        + f'<div style="display:grid;grid-template-columns:1fr 1fr;column-gap:16px;">{metric_rows}</div>'
-        + '</div>'
+        story.append(Paragraph("Class Probabilities", normal_style))
+        story.append(probability_table)
+        story.append(Spacer(1, 8))
+
+        metrics_data = [["Metric", "Value"]]
+        for metric_name, metric_value in result["metrics"].items():
+            metrics_data.append([metric_name, metric_value])
+
+        metrics_table = Table(metrics_data, colWidths=[3.4 * inch, 3.4 * inch])
+        metrics_table.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#22b854")),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                    ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
+                    ("FONTSIZE", (0, 0), (-1, -1), 9),
+                    ("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#dce6f4")),
+                    ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#fbfdff")]),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 8),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+                    ("TOPPADDING", (0, 0), (-1, -1), 6),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+                ]
+            )
+        )
+
+        story.append(Paragraph("Overall Model Metrics", normal_style))
+        story.append(metrics_table)
+        story.append(Spacer(1, 12))
+
+    story.append(Paragraph("Performance Summary", section_style))
+    story.append(Paragraph(summary_plain_text, normal_style))
+
+    doc.build(story)
+
+    buffer.seek(0)
+    return buffer.getvalue()
+
+
+# =========================
+# RUN PREDICTION
+# =========================
+
+audio_bytes = uploaded_audio_data["bytes"]
+audio_name = uploaded_audio_data["name"]
+audio_mime = uploaded_audio_data.get("mime", "audio/wav")
+
+audio_info = get_audio_info(audio_bytes, audio_name)
+waveform_svg = make_waveform_svg(audio_bytes)
+
+try:
+    with st.spinner("Extracting MFCC features and classifying your audio..."):
+        if selected_dataset == "AAD":
+            prediction_results = predict_aad(audio_bytes)
+            dataset_label = "AAD"
+        else:
+            prediction_results = predict_so762(audio_bytes)
+            dataset_label = "SO762"
+
+    prediction_error = None
+
+except Exception as error:
+    prediction_error = str(error)
+    prediction_results = None
+    dataset_label = selected_dataset
+
+
+# =========================
+# PAGE HEADER
+# =========================
+
+render_html(
+    """
+    <div class="results-header">
+        <div class="header-left">
+            <div class="header-icon">✓</div>
+
+            <div>
+                <h1>Fluency Classification Results</h1>
+                <p>Here are the classification results for your uploaded audio.</p>
+            </div>
+        </div>
+
+        <a class="back-button" href="/upload_audio" target="_self">← Back to Upload</a>
+    </div>
+    """
+)
+
+
+# =========================
+# TOP AUDIO + FILE INFO
+# =========================
+
+audio_b64 = base64.b64encode(audio_bytes).decode("utf-8")
+audio_src = f"data:{audio_mime};base64,{audio_b64}"
+safe_audio_name = escape(audio_name)
+
+top_left, top_right = st.columns([1.08, 1], gap="large")
+
+with top_left:
+    render_html(
+        f"""
+        <section class="result-card uploaded-audio-card">
+            <div class="card-title-row">
+                <div class="card-icon blue">♫</div>
+                <h2>Uploaded Audio</h2>
+            </div>
+
+            <div class="audio-name-row">
+                <span>{safe_audio_name}</span>
+                <strong>{audio_info["format"]}</strong>
+            </div>
+
+            <div class="waveform-wrap">
+                {waveform_svg}
+            </div>
+
+            <div class="waveform-time">
+                <span>0:00</span>
+                <span>{audio_info["duration"].replace(" sec", "") if "sec" in audio_info["duration"] else "--"}</span>
+            </div>
+
+            <audio controls class="results-audio-player" src="{audio_src}"></audio>
+        </section>
+        """
     )
 
 
-# =================================================
-# PAGE STYLES
-# =================================================
+with top_right:
+    render_html(
+        f"""
+        <section class="result-card file-info-card">
+            <div class="card-title-row">
+                <div class="card-icon blue">i</div>
+                <h2>File Information</h2>
+            </div>
 
-st.markdown("""
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
-header[data-testid="stHeader"] { display:none !important; }
-.stApp { background-color:#ececec; font-family:'Inter',sans-serif; overflow-x:hidden; }
-.block-container { max-width:1240px; padding-top:0.6rem; padding-bottom:2.5rem; }
-.header-bar {
-    width:100vw; margin-left:calc(50% - 50vw); margin-right:calc(50% - 50vw);
-    margin-bottom:2.55rem; background:#274d98; height:94px; display:flex;
-    align-items:center; padding-left:max(32px, calc((100vw - 1240px) / 2 + 70px));
-    border-top:1px solid #1c3a76; box-sizing:border-box;
-}
-.header-title { color:#fff; font-size:50px; font-weight:800; line-height:1; margin:0; }
-.stButton > button { border-radius:999px; font-weight:700; font-size:17px; padding:8px 24px; min-height:38px; border:2px solid #2e56a4; transition:none; }
-.stButton > button[kind="primary"]   { color:#fff; background:#2e56a4; }
-.stButton > button[kind="secondary"] { color:#2e56a4; background:#ececec; }
-.upload-shell { max-width:660px; margin:0 auto; }
-.uploaded-card { height:178px; border:1.8px solid #5a7fc3; border-radius:12px; background:#d2d8e5; padding:22px 24px; display:flex; align-items:center; gap:20px; box-sizing:border-box; }
-.audio-icon { width:90px; height:90px; border-radius:12px; background:#828282; color:#fff; display:flex; align-items:center; justify-content:center; font-size:48px; flex-shrink:0; }
-.audio-details { flex:1; display:flex; flex-direction:column; justify-content:center; color:#7b7b7b; }
-.audio-name { font-size:34px; font-weight:700; line-height:1.1; margin:0 0 8px 0; }
-.audio-size { font-size:18px; margin:0 0 6px 0; }
-.audio-player-inline { width:100%; height:34px; border-radius:10px; }
-.audio-close { color:#8f8f8f; margin-left:8px; font-size:36px; font-weight:500; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; opacity:0.75; }
-.audio-close:hover { color:#6f6f6f; opacity:1; }
-
-/* Loading banner */
-.loading-banner {
-    background: linear-gradient(90deg, #274d98, #2e6dd4, #274d98);
-    background-size: 200% 100%;
-    animation: bannerMove 2s linear infinite;
-    border-radius: 12px;
-    padding: 18px 28px;
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    margin-bottom: 24px;
-}
-.loading-banner-text {
-    color: #fff;
-    font-size: 18px;
-    font-weight: 700;
-    letter-spacing: 0.3px;
-}
-.loading-dot {
-    width: 12px; height: 12px; border-radius: 50%; background: #fff;
-    animation: dotPulse 1.2s ease-in-out infinite;
-    flex-shrink: 0;
-}
-.loading-dot:nth-child(2) { animation-delay: 0.2s; }
-.loading-dot:nth-child(3) { animation-delay: 0.4s; }
-@keyframes bannerMove { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
-@keyframes dotPulse { 0%,100%{opacity:0.3;transform:scale(0.8)} 50%{opacity:1;transform:scale(1.2)} }
-@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
-</style>
-""", unsafe_allow_html=True)
-
-st.markdown('<div class="header-bar"><h1 class="header-title">Oral Fluency Classification</h1></div>', unsafe_allow_html=True)
-
-side_l, col_left, col_right, side_r = st.columns([3.4, 1.5, 1.5, 3.4], gap="small")
-with col_left:
-    if st.button("Avalinguo", type="primary" if st.session_state.dataset == "Avalinguo" else "secondary", use_container_width=True):
-        st.session_state.dataset = "Avalinguo"
-        st.rerun()
-with col_right:
-    if st.button("SpeechOcean", type="primary" if st.session_state.dataset == "SpeechOcean" else "secondary", use_container_width=True):
-        st.session_state.dataset = "SpeechOcean"
-        st.rerun()
-
-margin_l, top_mid, margin_r = st.columns([1.25, 8.6, 1.25], gap="small")
-with top_mid:
-    size_mb   = uploaded_audio_data["size"] / (1024 * 1024)
-    audio_b64 = base64.b64encode(uploaded_audio_data["bytes"]).decode("utf-8")
-    audio_src = f"data:{uploaded_audio_data['mime']};base64,{audio_b64}"
-    safe_name = escape(uploaded_audio_data["name"])
-    st.markdown('<div class="upload-shell">', unsafe_allow_html=True)
-    st.markdown(
-        f'<div class="uploaded-card"><div class="audio-icon">♪</div>'
-        f'<div class="audio-details"><p class="audio-name">{safe_name}</p>'
-        f'<p class="audio-size">{size_mb:.1f} MB</p>'
-        f'<audio controls class="audio-player-inline" src="{audio_src}"></audio></div>'
-        f'<a class="audio-close" href="/?remove_audio=1" title="Remove audio">×</a></div>',
-        unsafe_allow_html=True
-    )
-    st.markdown('</div>', unsafe_allow_html=True)
-
-st.markdown("<div style='height:24px;'></div>", unsafe_allow_html=True)
-
-# =================================================
-# AVALINGUO (AAD) — 3 Classes
-# =================================================
-
-if st.session_state.dataset == "Avalinguo":
-
-    bottom_left, bottom_right = st.columns([1, 1], gap="large")
-    left_slot  = bottom_left.empty()
-    right_slot = bottom_right.empty()
-
-    left_slot.markdown(build_skeleton_card("Baseline SVM", "#37c424"), unsafe_allow_html=True)
-    right_slot.markdown(build_skeleton_card("Proposed SVM", "#2e56a4"), unsafe_allow_html=True)
-
-    banner_slot = st.empty()
-    banner_slot.markdown(
-        '<div class="loading-banner">'
-        '<div class="loading-dot"></div><div class="loading-dot"></div><div class="loading-dot"></div>'
-        '<span class="loading-banner-text">Extracting MFCC features and classifying your audio…</span>'
-        '</div>',
-        unsafe_allow_html=True,
+            {build_file_info(audio_info, audio_name)}
+        </section>
+        """
     )
 
-    try:
-        label_b, conf_b, proba_b, label_p, conf_p, proba_p = predict_aad(uploaded_audio_data["bytes"])
-        predict_error = None
-    except Exception as e:
-        predict_error = str(e)
 
-    banner_slot.empty()
+# =========================
+# RESULTS
+# =========================
 
-    if predict_error:
-        left_slot.empty()
-        right_slot.empty()
-        st.error(f"Prediction failed: {predict_error}")
-    else:
-        left_slot.markdown(build_card(
-            "Baseline SVM", "#37c424",
-            label_b, conf_b, proba_b,
-            "82.09%", "82.09%", "82.34%", "82.06%",
-            AAD_CLASS_LABELS
-        ), unsafe_allow_html=True)
-        right_slot.markdown(build_card(
-            "Proposed SVM", "#2e56a4",
-            label_p, conf_p, proba_p,
-            "85.39%", "85.39%", "85.52%", "85.38%",
-            AAD_CLASS_LABELS
-        ), unsafe_allow_html=True)
-
-# =================================================
-# SPEECHOCEAN (SO762) — 4 Classes
-# =================================================
+if prediction_error:
+    st.error(f"Prediction failed: {prediction_error}")
 
 else:
-    bottom_left, bottom_right = st.columns([1, 1], gap="large")
-    left_slot  = bottom_left.empty()
-    right_slot = bottom_right.empty()
+    model_left, model_right = st.columns(2, gap="large")
 
-    left_slot.markdown(build_skeleton_card("Baseline SVM", "#37c424"), unsafe_allow_html=True)
-    right_slot.markdown(build_skeleton_card("Proposed SVM", "#2e56a4"), unsafe_allow_html=True)
+    with model_left:
+        render_html(
+            build_result_card(
+                title="Baseline Model (SVM)",
+                badge="Balanced" if selected_dataset == "AAD" else "Baseline",
+                result=prediction_results["baseline"],
+                labels=prediction_results["labels"],
+                theme="blue",
+            )
+        )
 
-    banner_slot = st.empty()
-    banner_slot.markdown(
-        '<div class="loading-banner">'
-        '<div class="loading-dot"></div><div class="loading-dot"></div><div class="loading-dot"></div>'
-        '<span class="loading-banner-text">Extracting MFCC features and classifying your audio…</span>'
-        '</div>',
-        unsafe_allow_html=True,
+    with model_right:
+        render_html(
+            build_result_card(
+                title="Proposed Model (Hybrid)",
+                badge="Enhanced",
+                result=prediction_results["proposed"],
+                labels=prediction_results["labels"],
+                theme="green",
+            )
+        )
+
+    proposed_conf = prediction_results["proposed"]["confidence"]
+    baseline_conf = prediction_results["baseline"]["confidence"]
+
+    if proposed_conf >= baseline_conf:
+        summary_html = (
+            'The <strong class="green-text">Proposed Model (Hybrid)</strong> shows stronger confidence '
+            'than the <strong class="blue-text">Baseline Model</strong> for this uploaded audio sample.'
+        )
+        summary_plain_text = (
+            "The Proposed Model (Hybrid) shows stronger confidence than the Baseline Model "
+            "for this uploaded audio sample."
+        )
+    else:
+        summary_html = (
+            'The <strong class="blue-text">Baseline Model</strong> shows stronger confidence '
+            'than the <strong class="green-text">Proposed Model (Hybrid)</strong> for this uploaded audio sample.'
+        )
+        summary_plain_text = (
+            "The Baseline Model shows stronger confidence than the Proposed Model (Hybrid) "
+            "for this uploaded audio sample."
+        )
+
+    pdf_bytes = create_results_pdf(
+        audio_name=audio_name,
+        audio_info=audio_info,
+        selected_dataset=dataset_label,
+        prediction_results=prediction_results,
+        summary_plain_text=summary_plain_text,
     )
 
-    try:
-        label_b, conf_b, proba_b, label_p, conf_p, proba_p = predict_so762(uploaded_audio_data["bytes"])
-        predict_error = None
-    except Exception as e:
-        predict_error = str(e)
+    render_html(
+        f"""
+        <section class="performance-summary">
+            <div class="summary-icon">🏆</div>
 
-    banner_slot.empty()
+            <div class="summary-content">
+                <h2>Performance Summary</h2>
+                <p>{summary_html}</p>
+                <p>The displayed metrics include accuracy, recall, precision, and F1-score for model comparison.</p>
+            </div>
+        </section>
+        """
+    )
 
-    if predict_error:
-        left_slot.empty()
-        right_slot.empty()
-        st.error(f"Prediction failed: {predict_error}")
-    else:
-        left_slot.markdown(build_card(
-            "Baseline SVM", "#37c424",
-            label_b, conf_b, proba_b,
-            "70.52%", "70.52%", "67.43%", "68.25%",
-            SO762_CLASS_LABELS
-        ), unsafe_allow_html=True)
-        right_slot.markdown(build_card(
-            "Proposed SVM", "#2e56a4",
-            label_p, conf_p, proba_p,
-            "72.68%", "72.68%", "70.14%", "70.30%",
-            SO762_CLASS_LABELS
-        ), unsafe_allow_html=True)
+    action_col1, action_col2, action_col3 = st.columns([1.8, 1, 1], gap="large")
 
+    with action_col2:
+        st.download_button(
+            label="⇩ Download Results",
+            data=pdf_bytes,
+            file_name=f"fluency_classification_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
+            mime="application/pdf",
+            use_container_width=True,
+            key="download_results_pdf",
+        )
 
-# =================================================
-# ANALYZE ANOTHER AUDIO BUTTON
-# =================================================
-
-st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
-
-_, btn_col, _ = st.columns([3.5, 4, 3.5])
-with btn_col:
-    if st.button("Analyze Another Audio", type="secondary", use_container_width=True):
-        st.session_state.pop("uploaded_audio_obj", None)
-        st.session_state.pop("uploaded_audio_data", None)
-        st.session_state.pop("audio_uploader", None)
-        st.switch_page("OFC.py")
+    with action_col3:
+        if st.button("Analyze Another Audio →", use_container_width=True, key="analyze_another_audio"):
+            st.session_state.pop("uploaded_audio_data", None)
+            st.session_state.pop("uploaded_audio", None)
+            st.session_state.pop("audio_upload", None)
+            st.switch_page("pages/upload_audio.py")
