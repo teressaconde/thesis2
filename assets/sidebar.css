@@ -9,7 +9,6 @@ footer {
     display: none !important;
 }
 
-/* Hide Streamlit sidebar collapse / expand button */
 button[kind="header"],
 [data-testid="collapsedControl"],
 [data-testid="stSidebarCollapseButton"],
@@ -19,7 +18,6 @@ button[title="Exit fullscreen"] {
     display: none !important;
 }
 
-/* Hide Streamlit default multipage navigation only */
 [data-testid="stSidebarNav"] {
     display: none !important;
 }
@@ -38,7 +36,6 @@ body,
     color: #0b1738 !important;
 }
 
-/* Make main page text visible */
 .block-container,
 .block-container p,
 .block-container span,
@@ -55,30 +52,31 @@ body,
 
 
 /* =========================
-   REAL STREAMLIT SIDEBAR
+   SIDEBAR CONTAINER
 ========================= */
 
-/* Do NOT hide the real sidebar */
 section[data-testid="stSidebar"] {
     display: block !important;
-    width: 340px !important;
-    min-width: 340px !important;
-    max-width: 340px !important;
-    background: linear-gradient(180deg, #082a75 0%, #061a4a 100%) !important;
+    width: 300px !important;
+    min-width: 300px !important;
+    max-width: 300px !important;
+    background:
+        radial-gradient(circle at 50% 100%, rgba(0, 70, 180, 0.35) 0%, transparent 35%),
+        linear-gradient(180deg, #073486 0%, #061d59 46%, #04194a 100%) !important;
     border-right: none !important;
 }
 
 section[data-testid="stSidebar"] > div {
-    background: linear-gradient(180deg, #082a75 0%, #061a4a 100%) !important;
-    padding: 0 18px 22px 18px !important;
+    background:
+        radial-gradient(circle at 50% 100%, rgba(0, 70, 180, 0.35) 0%, transparent 35%),
+        linear-gradient(180deg, #073486 0%, #061d59 46%, #04194a 100%) !important;
+    padding: 28px 18px 22px 18px !important;
 }
 
-/* Make sidebar content full height */
 section[data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
-    gap: 0.45rem !important;
+    gap: 0.4rem !important;
 }
 
-/* Keep sidebar text white */
 section[data-testid="stSidebar"],
 section[data-testid="stSidebar"] p,
 section[data-testid="stSidebar"] span,
@@ -97,42 +95,185 @@ section[data-testid="stSidebar"] label {
 
 .sidebar-brand {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 12px;
-    margin-top: 0px;
-    margin-bottom: 46px;
+    text-align: center !important;
+    gap: 16px;
+    margin-top: 4px;
+    margin-bottom: 34px;
     color: #ffffff !important;
 }
 
 .sidebar-logo {
-    width: 52px;
-    height: 52px;
-    border-radius: 14px;
+    width: 82px;
+    height: 82px;
+    border-radius: 24px;
     display: grid;
     place-items: center;
-    border: 1px solid rgba(255, 255, 255, 0.25);
-    font-size: 28px;
+    background: linear-gradient(135deg, #2f83ff 0%, #0d56e5 100%);
+    box-shadow: 0 18px 35px rgba(0, 0, 0, 0.25);
+    color: #ffffff !important;
     flex-shrink: 0;
+}
+
+.sidebar-logo svg {
+    width: 52px;
+    height: 52px;
+}
+
+.sidebar-brand-text {
+    text-align: center !important;
 }
 
 .sidebar-title {
     color: #ffffff !important;
-    font-size: 20px !important;
+    font-size: 24px !important;
     font-weight: 900 !important;
-    line-height: 1.15 !important;
+    line-height: 1.12 !important;
     margin: 0 !important;
+    letter-spacing: -0.4px;
 }
 
 .sidebar-subtitle {
-    color: rgba(255, 255, 255, 0.72) !important;
-    font-size: 12px !important;
+    color: rgba(255, 255, 255, 0.82) !important;
+    font-size: 13px !important;
     line-height: 1.35 !important;
-    margin-top: 5px !important;
+    margin-top: 12px !important;
 }
 
 
 /* =========================
-   SIDEBAR BUTTONS
+   SIDEBAR PAGE LINKS
+========================= */
+
+section[data-testid="stSidebar"] div[data-testid="stPageLink"] {
+    margin-bottom: 9px !important;
+}
+
+section[data-testid="stSidebar"] div[data-testid="stPageLink"] a {
+    width: 100% !important;
+    height: 58px !important;
+    min-height: 58px !important;
+    border-radius: 10px !important;
+    border: none !important;
+    background: transparent !important;
+    color: rgba(255, 255, 255, 0.90) !important;
+    font-size: 15px !important;
+    font-weight: 750 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 14px !important;
+    padding: 0 18px !important;
+    text-decoration: none !important;
+    box-shadow: none !important;
+}
+
+section[data-testid="stSidebar"] div[data-testid="stPageLink"] a:hover {
+    background: rgba(255, 255, 255, 0.10) !important;
+    color: #ffffff !important;
+}
+
+/* Active/current page */
+section[data-testid="stSidebar"] div[data-testid="stPageLink"] a[aria-current="page"] {
+    background: linear-gradient(135deg, #2d7cff 0%, #0a55ea 100%) !important;
+    color: #ffffff !important;
+    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.22) !important;
+}
+
+section[data-testid="stSidebar"] div[data-testid="stPageLink"] a span {
+    color: inherit !important;
+}
+
+section[data-testid="stSidebar"] div[data-testid="stPageLink"] a [data-testid="stIconMaterial"] {
+    color: inherit !important;
+    font-size: 28px !important;
+    width: 30px !important;
+    height: 30px !important;
+}
+
+
+/* =========================
+   USER CARD
+========================= */
+
+.user-card {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 17px 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 62px;
+    margin-bottom: 12px;
+}
+
+.avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    background: #e9f1ff;
+    color: #082a75 !important;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.avatar-face {
+    font-size: 34px;
+    line-height: 1;
+}
+
+.user-details {
+    min-width: 0;
+}
+
+.user-role {
+    font-size: 11px;
+    font-weight: 800;
+    color: rgba(255, 255, 255, 0.75) !important;
+    margin-bottom: 2px;
+}
+
+.user-name {
+    font-size: 17px;
+    font-weight: 900;
+    color: #ffffff !important;
+    line-height: 1.1;
+}
+
+.user-email {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.78) !important;
+    margin-top: 5px;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.online {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: rgba(255, 255, 255, 0.85) !important;
+    font-size: 11px;
+    font-weight: 700;
+    margin-top: 8px;
+}
+
+.online-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: #2eea57;
+}
+
+
+/* =========================
+   LOGOUT BUTTON
 ========================= */
 
 section[data-testid="stSidebar"] div[data-testid="stButton"] {
@@ -141,107 +282,20 @@ section[data-testid="stSidebar"] div[data-testid="stButton"] {
 
 section[data-testid="stSidebar"] div[data-testid="stButton"] > button {
     width: 100% !important;
-    height: 52px !important;
-    min-height: 52px !important;
-    border-radius: 12px !important;
-    border: none !important;
+    height: 58px !important;
+    min-height: 58px !important;
+    border-radius: 10px !important;
+    border: 1px solid rgba(255, 255, 255, 0.35) !important;
     background: transparent !important;
-    color: rgba(255, 255, 255, 0.86) !important;
+    color: #ffffff !important;
     font-size: 15px !important;
-    font-weight: 750 !important;
-    text-align: left !important;
-    justify-content: flex-start !important;
-    padding: 0 16px !important;
+    font-weight: 800 !important;
+    justify-content: center !important;
+    text-align: center !important;
     box-shadow: none !important;
 }
 
 section[data-testid="stSidebar"] div[data-testid="stButton"] > button:hover {
-    background: rgba(255, 255, 255, 0.10) !important;
-    color: #ffffff !important;
-}
-
-/* Active sidebar button */
-section[data-testid="stSidebar"] div[data-testid="stButton"] > button[kind="primary"] {
-    background: linear-gradient(135deg, #1f70ff, #0c4bd8) !important;
-    color: #ffffff !important;
-    box-shadow: 0 12px 22px rgba(0, 0, 0, 0.20) !important;
-}
-
-
-/* =========================
-   USER CARD
-========================= */
-
-.sidebar-spacer {
-    height: 80px;
-}
-
-.user-card {
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    background: rgba(255, 255, 255, 0.08);
-    border-radius: 16px;
-    padding: 14px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-top: 70px;
-    margin-bottom: 12px;
-}
-
-.avatar {
-    width: 42px;
-    height: 42px;
-    border-radius: 999px;
-    display: grid;
-    place-items: center;
-    background: #e9f1ff;
-    color: #082a75 !important;
-    font-size: 22px;
-    flex-shrink: 0;
-}
-
-.user-name {
-    font-size: 13px;
-    font-weight: 900;
-    color: #ffffff !important;
-}
-
-.user-email {
-    font-size: 10.5px;
-    color: rgba(255, 255, 255, 0.70) !important;
-    margin-top: 2px;
-}
-
-.online {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    color: #42ff75 !important;
-    font-size: 11px;
-    font-weight: 700;
-    margin-top: 5px;
-}
-
-.online-dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 999px;
-    background: #42ff75;
-}
-
-
-/* =========================
-   LOGOUT BUTTON
-========================= */
-
-section[data-testid="stSidebar"] div[data-testid="stButton"]:last-of-type > button {
-    border: 1px solid rgba(255, 255, 255, 0.20) !important;
-    background: rgba(255, 255, 255, 0.06) !important;
-    justify-content: center !important;
-    text-align: center !important;
-}
-
-section[data-testid="stSidebar"] div[data-testid="stButton"]:last-of-type > button:hover {
     background: rgba(255, 255, 255, 0.12) !important;
 }
 
@@ -262,85 +316,31 @@ section[data-testid="stSidebar"] div[data-testid="stButton"]:last-of-type > butt
 
 @media (max-width: 900px) {
     section[data-testid="stSidebar"] {
-        width: 300px !important;
-        min-width: 300px !important;
-        max-width: 300px !important;
+        width: 280px !important;
+        min-width: 280px !important;
+        max-width: 280px !important;
     }
 
     .sidebar-title {
-        font-size: 17px !important;
+        font-size: 21px !important;
     }
 
     .sidebar-subtitle {
-        font-size: 11px !important;
+        font-size: 12px !important;
     }
 
-    section[data-testid="stSidebar"] div[data-testid="stButton"] > button {
-        font-size: 13px !important;
-        padding: 0 12px !important;
+    section[data-testid="stSidebar"] div[data-testid="stPageLink"] a {
+        font-size: 14px !important;
+        padding: 0 14px !important;
+    }
+
+    section[data-testid="stSidebar"] div[data-testid="stPageLink"] a [data-testid="stIconMaterial"] {
+        font-size: 25px !important;
+        width: 27px !important;
+        height: 27px !important;
     }
 
     .block-container {
         padding: 1.5rem !important;
     }
-}
-
-
-.sidebar-nav-links {
-    display: grid;
-    gap: 8px;
-}
-
-.sidebar-link {
-    height: 52px;
-    border-radius: 12px;
-    padding: 0 16px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    color: rgba(255, 255, 255, 0.82) !important;
-    text-decoration: none !important;
-    font-size: 15px;
-    font-weight: 750;
-    box-sizing: border-box;
-}
-
-.sidebar-link:hover {
-    background: rgba(255, 255, 255, 0.10);
-    color: #ffffff !important;
-}
-
-.sidebar-link.active {
-    background: linear-gradient(135deg, #1f70ff, #0c4bd8);
-    color: #ffffff !important;
-    box-shadow: 0 12px 22px rgba(0, 0, 0, 0.20);
-}
-
-.sidebar-link-icon {
-    width: 24px;
-    height: 24px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-
-.sidebar-link-icon svg {
-    width: 24px;
-    height: 24px;
-    display: block;
-}
-
-.user-card {
-    width: 100%;
-    box-sizing: border-box;
-}
-
-.user-email {
-    font-size: 11px;
-    color: rgba(255, 255, 255, 0.70) !important;
-    margin-top: 2px;
-    white-space: normal;
-    overflow-wrap: anywhere;
-    word-break: break-word;
 }

@@ -7,10 +7,10 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-from auth_guard import require_login
+
 from components.sidebar import load_sidebar_css, render_sidebar
 
-require_login()
+
 load_sidebar_css()
 render_sidebar(active_page="Dashboard")
 
