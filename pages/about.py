@@ -9,9 +9,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-
 from components.sidebar import load_sidebar_css, render_sidebar
-
 
 load_sidebar_css()
 render_sidebar(active_page="About System")

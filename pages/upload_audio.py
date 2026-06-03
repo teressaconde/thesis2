@@ -16,9 +16,10 @@ from components.sidebar import load_sidebar_css, render_sidebar
 load_sidebar_css()
 render_sidebar(active_page="Upload Audio")
 
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 UPLOAD_CSS = BASE_DIR / "assets" / "upload_audio.css"
-NOTE_IMAGE = BASE_DIR / "assets" / "audio_note.jpg"
+NOTE_IMAGE = BASE_DIR / "assets" / "note.png"
 
 
 def load_css(path: Path):
@@ -67,6 +68,7 @@ def get_wav_info(uploaded_file):
 
     except Exception:
         uploaded_file.seek(0)
+
         return {
             "duration": "Not available",
             "sample_rate": "Not available",
@@ -74,12 +76,34 @@ def get_wav_info(uploaded_file):
         }
 
 
+def save_uploaded_audio_to_session(uploaded_file, selected_dataset):
+    uploaded_file.seek(0)
+    audio_bytes = uploaded_file.read()
+    uploaded_file.seek(0)
+
+    st.session_state.uploaded_audio_data = {
+        "name": uploaded_file.name,
+        "size": uploaded_file.size,
+        "mime": uploaded_file.type or "audio/wav",
+        "bytes": audio_bytes,
+    }
+
+    st.session_state.selected_model = selected_dataset
+    st.session_state.selected_dataset = selected_dataset
+
+
 load_css(UPLOAD_CSS)
+
+
+# =========================
+# SESSION DEFAULTS
+# =========================
 
 if "selected_dataset" not in st.session_state:
     st.session_state.selected_dataset = "AAD"
 
 query_model = get_query_model()
+
 if query_model:
     st.session_state.selected_dataset = query_model
 
@@ -217,6 +241,11 @@ with upload_col:
             key="audio_upload",
         )
 
+        # IMPORTANT:
+        # Save the uploaded audio immediately so Dashboard can detect it.
+        if uploaded_file is not None:
+            save_uploaded_audio_to_session(uploaded_file, selected_dataset)
+
         render_html(
             """
             <div class="supported-text">
@@ -323,20 +352,9 @@ with st.container(border=True):
             )
 
 if classify_clicked:
-    if uploaded_file is None:
+    if uploaded_file is None and "uploaded_audio_data" not in st.session_state:
         st.warning("Please upload an audio file first before preprocessing.")
     else:
-        uploaded_file.seek(0)
-        audio_bytes = uploaded_file.read()
-        uploaded_file.seek(0)
-
-        st.session_state.uploaded_audio_data = {
-            "name": uploaded_file.name,
-            "size": uploaded_file.size,
-            "mime": uploaded_file.type or "audio/wav",
-            "bytes": audio_bytes,
-        }
-
         st.session_state.selected_model = selected_dataset
-
+        st.session_state.selected_dataset = selected_dataset
         st.switch_page("pages/results.py")

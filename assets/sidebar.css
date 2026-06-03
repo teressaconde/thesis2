@@ -91,23 +91,27 @@ section[data-testid="stSidebar"] label {
 
 /* =========================
    SIDEBAR BRAND
+   Icon is now aligned left beside the text
 ========================= */
 
 .sidebar-brand {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    text-align: center !important;
-    gap: 16px;
-    margin-top: 4px;
-    margin-bottom: 34px;
+    justify-content: flex-start;
+    text-align: left !important;
+    gap: 14px;
+    margin-top: 10px;
+    margin-bottom: 42px;
+    padding-left: 8px;
+    padding-right: 4px;
     color: #ffffff !important;
 }
 
 .sidebar-logo {
-    width: 82px;
-    height: 82px;
-    border-radius: 24px;
+    width: 64px;
+    height: 64px;
+    border-radius: 18px;
     display: grid;
     place-items: center;
     background: linear-gradient(135deg, #2f83ff 0%, #0d56e5 100%);
@@ -117,28 +121,46 @@ section[data-testid="stSidebar"] label {
 }
 
 .sidebar-logo svg {
-    width: 52px;
-    height: 52px;
+    width: 38px;
+    height: 38px;
+}
+
+.sidebar-logo svg,
+.sidebar-logo svg * {
+    color: #ffffff !important;
+    stroke: #ffffff !important;
+    fill: none !important;
+}
+
+.sidebar-logo svg [stroke] {
+    stroke: #ffffff !important;
+}
+
+.sidebar-logo svg [fill]:not([fill="none"]) {
+    fill: #ffffff !important;
 }
 
 .sidebar-brand-text {
-    text-align: center !important;
+    text-align: left !important;
+    min-width: 0;
 }
 
 .sidebar-title {
     color: #ffffff !important;
-    font-size: 24px !important;
+    font-size: 21px !important;
     font-weight: 900 !important;
     line-height: 1.12 !important;
     margin: 0 !important;
     letter-spacing: -0.4px;
+    text-align: left !important;
 }
 
 .sidebar-subtitle {
     color: rgba(255, 255, 255, 0.82) !important;
-    font-size: 13px !important;
+    font-size: 11.5px !important;
     line-height: 1.35 !important;
-    margin-top: 12px !important;
+    margin-top: 8px !important;
+    text-align: left !important;
 }
 
 
@@ -193,114 +215,6 @@ section[data-testid="stSidebar"] div[data-testid="stPageLink"] a [data-testid="s
 
 
 /* =========================
-   USER CARD
-========================= */
-
-.user-card {
-    width: 100%;
-    box-sizing: border-box;
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    background: rgba(255, 255, 255, 0.08);
-    border-radius: 16px;
-    padding: 17px 16px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    margin-top: 62px;
-    margin-bottom: 12px;
-}
-
-.avatar {
-    width: 56px;
-    height: 56px;
-    border-radius: 999px;
-    display: grid;
-    place-items: center;
-    background: #e9f1ff;
-    color: #082a75 !important;
-    flex-shrink: 0;
-    overflow: hidden;
-}
-
-.avatar-face {
-    font-size: 34px;
-    line-height: 1;
-}
-
-.user-details {
-    min-width: 0;
-}
-
-.user-role {
-    font-size: 11px;
-    font-weight: 800;
-    color: rgba(255, 255, 255, 0.75) !important;
-    margin-bottom: 2px;
-}
-
-.user-name {
-    font-size: 17px;
-    font-weight: 900;
-    color: #ffffff !important;
-    line-height: 1.1;
-}
-
-.user-email {
-    font-size: 11px;
-    color: rgba(255, 255, 255, 0.78) !important;
-    margin-top: 5px;
-    white-space: normal;
-    overflow-wrap: anywhere;
-    word-break: break-word;
-}
-
-.online {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    color: rgba(255, 255, 255, 0.85) !important;
-    font-size: 11px;
-    font-weight: 700;
-    margin-top: 8px;
-}
-
-.online-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 999px;
-    background: #2eea57;
-}
-
-
-/* =========================
-   LOGOUT BUTTON
-========================= */
-
-section[data-testid="stSidebar"] div[data-testid="stButton"] {
-    margin-bottom: 8px !important;
-}
-
-section[data-testid="stSidebar"] div[data-testid="stButton"] > button {
-    width: 100% !important;
-    height: 58px !important;
-    min-height: 58px !important;
-    border-radius: 10px !important;
-    border: 1px solid rgba(255, 255, 255, 0.35) !important;
-    background: transparent !important;
-    color: #ffffff !important;
-    font-size: 15px !important;
-    font-weight: 800 !important;
-    justify-content: center !important;
-    text-align: center !important;
-    box-shadow: none !important;
-}
-
-section[data-testid="stSidebar"] div[data-testid="stButton"] > button:hover {
-    background: rgba(255, 255, 255, 0.12) !important;
-}
-
-
-/* =========================
    MAIN CONTENT BUTTONS
 ========================= */
 
@@ -321,12 +235,29 @@ section[data-testid="stSidebar"] div[data-testid="stButton"] > button:hover {
         max-width: 280px !important;
     }
 
+    .sidebar-brand {
+        gap: 12px;
+        padding-left: 6px;
+        margin-bottom: 34px;
+    }
+
+    .sidebar-logo {
+        width: 58px;
+        height: 58px;
+        border-radius: 16px;
+    }
+
+    .sidebar-logo svg {
+        width: 34px;
+        height: 34px;
+    }
+
     .sidebar-title {
-        font-size: 21px !important;
+        font-size: 19px !important;
     }
 
     .sidebar-subtitle {
-        font-size: 12px !important;
+        font-size: 10.5px !important;
     }
 
     section[data-testid="stSidebar"] div[data-testid="stPageLink"] a {

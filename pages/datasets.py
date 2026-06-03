@@ -45,10 +45,10 @@ aad_intermediate = 527
 aad_high = 459
 
 so_total = 5000
-so_03 = 1283
-so_45 = 398
-so_67 = 1203
-so_810 = 3347
+so_class_0 = 52
+so_class_1 = 398
+so_class_2 = 1203
+so_class_3 = 3347
 
 
 def percent(value, total):
@@ -89,7 +89,7 @@ render_html(
                     This study uses two publicly available speech datasets:
                     Avalinguo Audio Dataset (AAD) and SpeechOcean762 (SO762).
                     AAD is a balanced dataset with 3 fluency classes, while SO762
-                    is an imbalanced dataset with 4 score-based fluency groups.
+                    is an imbalanced dataset with 4 score-based fluency classes.
                 </p>
             </div>
         </div>
@@ -267,35 +267,35 @@ render_html(
                 </div>
             </div>
 
-            <h3 class="subsection-title">Fluency Score Groups</h3>
+            <h3 class="subsection-title">Fluency Score Classes</h3>
 
             <div class="class-grid four-cols">
-                <div class="class-box so-low">
-                    <span class="dot green-dot"></span>
-                    <h4>0 – 3</h4>
-                    <strong>1,283</strong>
-                    <small>{percent(so_03, so_total):.2f}%</small>
+                <div class="class-box so-class-0">
+                    <span class="dot blue-dot"></span>
+                    <h4>Class 0</h4>
+                    <strong>52</strong>
+                    <small>{percent(so_class_0, so_total):.2f}%</small>
                 </div>
 
-                <div class="class-box so-midlow">
+                <div class="class-box so-class-1">
                     <span class="dot yellow-dot"></span>
-                    <h4>4 – 5</h4>
+                    <h4>Class 1</h4>
                     <strong>398</strong>
-                    <small>{percent(so_45, so_total):.2f}%</small>
+                    <small>{percent(so_class_1, so_total):.2f}%</small>
                 </div>
 
-                <div class="class-box so-mid">
+                <div class="class-box so-class-2">
                     <span class="dot orange-dot"></span>
-                    <h4>6 – 7</h4>
+                    <h4>Class 2</h4>
                     <strong>1,203</strong>
-                    <small>{percent(so_67, so_total):.2f}%</small>
+                    <small>{percent(so_class_2, so_total):.2f}%</small>
                 </div>
 
-                <div class="class-box so-high">
-                    <span class="dot red-dot"></span>
-                    <h4>8 – 10</h4>
+                <div class="class-box so-class-3">
+                    <span class="dot green-dot"></span>
+                    <h4>Class 3</h4>
                     <strong>3,347</strong>
-                    <small>{percent(so_810, so_total):.2f}%</small>
+                    <small>{percent(so_class_3, so_total):.2f}%</small>
                 </div>
             </div>
 
@@ -303,7 +303,7 @@ render_html(
                 <div class="description-icon">▧</div>
                 <p>
                     <strong>Description:</strong> SO762 contains read speech samples
-                    scored from 0–10. Class 8–10 dominates the dataset, making it
+                    scored from 0–10. Class 3 dominates the dataset, making it
                     highly imbalanced.
                 </p>
             </div>
@@ -347,15 +347,15 @@ render_html(
                     <tr>
                         <td>Fluency Labels</td>
                         <td>3 Classes<br>Low, Intermediate, High</td>
-                        <td>4 Score Groups<br>0–3, 4–5, 6–7, 8–10</td>
-                        <td>SO762 uses score-based fluency grouping.</td>
+                        <td>4 Classes<br>Class 0, Class 1, Class 2, Class 3</td>
+                        <td>SO762 uses score-based fluency classes.</td>
                     </tr>
 
                     <tr>
                         <td>Class Distribution</td>
                         <td>Roughly Balanced</td>
-                        <td>Imbalanced</td>
-                        <td>SO762 has a dominant 8–10 score group.</td>
+                        <td>Highly Imbalanced</td>
+                        <td>SO762 has a dominant Class 3 group.</td>
                     </tr>
 
                     <tr>
@@ -391,7 +391,7 @@ render_html(
                     <div class="legend-list">
                         <div><i class="legend-green"></i> Low ({aad_low})</div>
                         <div><i class="legend-yellow"></i> Intermediate ({aad_intermediate})</div>
-                        <div><i class="legend-red"></i> High ({aad_high})</div>
+                        <div><i class="legend-blue"></i> High ({aad_high})</div>
                     </div>
                 </div>
 
@@ -403,10 +403,10 @@ render_html(
                     </div>
 
                     <div class="legend-list">
-                        <div><i class="legend-green"></i> 0 – 3 ({so_03})</div>
-                        <div><i class="legend-yellow"></i> 4 – 5 ({so_45})</div>
-                        <div><i class="legend-orange"></i> 6 – 7 ({so_67})</div>
-                        <div><i class="legend-red"></i> 8 – 10 ({so_810})</div>
+                        <div><i class="legend-blue"></i> Class 0 ({so_class_0})</div>
+                        <div><i class="legend-yellow"></i> Class 1 ({so_class_1})</div>
+                        <div><i class="legend-orange"></i> Class 2 ({so_class_2})</div>
+                        <div><i class="legend-green"></i> Class 3 ({so_class_3})</div>
                     </div>
                 </div>
             </div>

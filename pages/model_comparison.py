@@ -33,102 +33,141 @@ load_css(PAGE_CSS)
 
 
 # =========================
-# DATA FROM THESIS RESULTS
+# AAD PER-FOLD RESULTS
 # =========================
 
-overview_metrics = [
+baseline_folds = [
+    ("Fold 1", 0.8105, 0.8132, 0.8127, 0.12),
+    ("Fold 2", 0.8386, 0.8401, 0.8398, 0.12),
+    ("Fold 3", 0.7895, 0.7919, 0.7909, 0.12),
+    ("Fold 4", 0.8175, 0.8187, 0.8180, 0.12),
+    ("Fold 5", 0.8486, 0.8497, 0.8489, 0.12),
+]
+
+enhanced_folds = [
+    ("Fold 1", 0.8491, 0.8512, 0.8509, 2.74),
+    ("Fold 2", 0.8491, 0.8497, 0.8492, 4.74),
+    ("Fold 3", 0.8526, 0.8549, 0.8530, 2.53),
+    ("Fold 4", 0.8456, 0.8473, 0.8459, 2.51),
+    ("Fold 5", 0.8732, 0.8739, 0.8724, 2.45),
+]
+
+
+# =========================
+# TABLE 8 SUMMARY RESULTS
+# =========================
+
+aad_summary = [
     {
-        "label": "Accuracy",
-        "icon": "◎",
-        "baseline": 84.46,
-        "enhanced": 88.15,
-        "change": "+3.69%",
-        "better": "up",
+        "metric": "Accuracy",
+        "baseline": 82.09,
+        "enhanced": 85.39,
+        "change": "+3.30%",
+        "status": "good",
     },
     {
-        "label": "Precision (Macro)",
-        "icon": "◉",
-        "baseline": 84.30,
-        "enhanced": 87.61,
-        "change": "+3.31%",
-        "better": "up",
+        "metric": "Precision (W)",
+        "baseline": 82.48,
+        "enhanced": 85.58,
+        "change": "+3.10%",
+        "status": "good",
     },
     {
-        "label": "Recall (Macro)",
-        "icon": "↩",
-        "baseline": 84.43,
-        "enhanced": 88.46,
-        "change": "+4.03%",
-        "better": "up",
+        "metric": "Recall (W)",
+        "baseline": 82.09,
+        "enhanced": 85.39,
+        "change": "+3.30%",
+        "status": "good",
     },
     {
-        "label": "F1-Score (Macro)",
-        "icon": "☆",
-        "baseline": 84.29,
-        "enhanced": 87.98,
-        "change": "+3.69%",
-        "better": "up",
+        "metric": "F1-Score (Weighted)",
+        "baseline": 82.21,
+        "enhanced": 85.43,
+        "change": "+3.22%",
+        "status": "good",
     },
     {
-        "label": "Training Time",
-        "icon": "◷",
-        "baseline": 12.42,
-        "enhanced": 4.87,
-        "change": "-60.78%",
-        "better": "down",
+        "metric": "F1-Score (Macro)",
+        "baseline": 82.27,
+        "enhanced": 85.54,
+        "change": "+3.27%",
+        "status": "good",
+    },
+    {
+        "metric": "Std (Accuracy)",
+        "baseline": 0.0209,
+        "enhanced": 0.0099,
+        "change": "-0.0110",
+        "status": "good",
+        "unit": "std",
+    },
+    {
+        "metric": "Train Time",
+        "baseline": 0.12,
+        "enhanced": 3.00,
+        "change": "+2.88s",
+        "status": "warning",
         "unit": "s",
     },
 ]
 
-aad_metrics = [
-    ("Accuracy (%)", 84.46, 88.15),
-    ("Precision (Macro) (%)", 84.30, 87.61),
-    ("Recall (Macro) (%)", 84.43, 88.46),
-    ("F1-Score (Macro) (%)", 84.29, 87.98),
+so762_summary = [
+    {
+        "metric": "Accuracy",
+        "baseline": "70.52%",
+        "enhanced": "72.28%",
+        "change": "+1.76%",
+        "status": "good",
+    },
+    {
+        "metric": "Precision (W)",
+        "baseline": "67.43%",
+        "enhanced": "67.86%",
+        "change": "+0.43%",
+        "status": "good",
+    },
+    {
+        "metric": "Recall (W)",
+        "baseline": "70.52%",
+        "enhanced": "72.28%",
+        "change": "+1.76%",
+        "status": "good",
+    },
+    {
+        "metric": "F1-Score (Weighted)",
+        "baseline": "68.52%",
+        "enhanced": "67.06%",
+        "change": "-1.46%",
+        "status": "warning",
+    },
+    {
+        "metric": "F1-Score (Macro)",
+        "baseline": "43.00%",
+        "enhanced": "38.00%",
+        "change": "-5.00%",
+        "status": "warning",
+    },
+    {
+        "metric": "Std (Accuracy)",
+        "baseline": "—",
+        "enhanced": "—",
+        "change": "—",
+        "status": "neutral",
+    },
+    {
+        "metric": "Train Time",
+        "baseline": "1.01s",
+        "enhanced": "2.61s",
+        "change": "+1.60s",
+        "status": "warning",
+    },
 ]
 
 aad_std = [
     ("Accuracy", "0.0209", "0.0099"),
-    ("Precision", "0.0217", "0.0113"),
-    ("Recall", "0.0246", "0.0121"),
-    ("F1-Score", "0.0219", "0.0098"),
-]
-
-so762_metrics = [
-    ("Accuracy (Weighted)", "70.52%", "72.28%", "+2.16%"),
-    ("Precision (Weighted)", "67.43%", "67.86%", "+0.43%"),
-    ("Recall (Weighted)", "70.52%", "72.28%", "+1.76%"),
-    ("F1-Score (Weighted)", "68.25%", "67.06%", "-1.19%"),
-]
-
-# AAD confusion matrix values are arranged to match the narrative in the paper:
-# diagonal improvements: Low 345→370, Intermediate 425→428, High 399→418.
-aad_baseline_cm = [
-    [345, 78, 15],
-    [83, 425, 19],
-    [12, 48, 399],
-]
-
-aad_enhanced_cm = [
-    [370, 59, 9],
-    [74, 428, 25],
-    [7, 34, 418],
-]
-
-# SO762 confusion matrix display values for UI visualization.
-# You may replace these with your exact matrix if you export it from training.
-so762_baseline_cm = [
-    [4, 2, 6, 7],
-    [11, 46, 55, 286],
-    [18, 39, 280, 866],
-    [26, 68, 216, 1701],
-]
-
-so762_enhanced_cm = [
-    [0, 2, 3, 14],
-    [8, 59, 48, 283],
-    [14, 28, 280, 881],
-    [17, 53, 172, 1769],
+    ("F1-Score (Macro)", "0.0205", "0.0096"),
+    ("F1-Score (Weighted)", "0.0205", "0.0094"),
+    ("Train Time", "0.00s", "0.88s"),
 ]
 
 
@@ -136,27 +175,30 @@ so762_enhanced_cm = [
 # HTML BUILDERS
 # =========================
 
-def metric_card(item):
-    unit = item.get("unit", "%")
-    baseline_value = f'{item["baseline"]:.2f}{unit}'
-    enhanced_value = f'{item["enhanced"]:.2f}{unit}'
+def summary_card(metric):
+    unit = metric.get("unit", "%")
 
-    arrow = "↓" if item["better"] == "down" else "↑"
+    if unit == "s":
+        baseline_value = f"{metric['baseline']:.2f}s"
+        enhanced_value = f"{metric['enhanced']:.2f}s"
+    elif unit == "std":
+        baseline_value = f"±{metric['baseline']:.4f}"
+        enhanced_value = f"±{metric['enhanced']:.4f}"
+    else:
+        baseline_value = f"{metric['baseline']:.2f}%"
+        enhanced_value = f"{metric['enhanced']:.2f}%"
 
     return f"""
-    <div class="summary-metric-card">
-        <div class="metric-top">
-            <div class="metric-symbol">{item["icon"]}</div>
-            <div class="metric-name">{item["label"]}</div>
-        </div>
+    <div class="summary-card">
+        <div class="summary-title">{metric["metric"]}</div>
 
-        <div class="metric-comparison">
+        <div class="summary-values">
             <div>
                 <strong class="blue-value">{baseline_value}</strong>
                 <span>Baseline SVM</span>
             </div>
 
-            <div class="split-line"></div>
+            <div class="divider"></div>
 
             <div>
                 <strong class="green-value">{enhanced_value}</strong>
@@ -164,151 +206,67 @@ def metric_card(item):
             </div>
         </div>
 
-        <div class="metric-change">
-            <span>{arrow}</span>
-            <strong>{item["change"]}</strong>
+        <div class="summary-change {metric["status"]}">
+            <span>Change:</span>
+            <strong>{metric["change"]}</strong>
         </div>
     </div>
     """
 
 
-def small_bar_chart(metrics):
-    charts = ""
+def so762_card(metric):
+    return f"""
+    <div class="summary-card so-card">
+        <div class="summary-title">{metric["metric"]}</div>
 
-    for title, baseline, enhanced in metrics:
-        charts += f"""
-        <div class="mini-bar-chart">
-            <h4>{title}</h4>
+        <div class="summary-values">
+            <div>
+                <strong class="blue-value">{metric["baseline"]}</strong>
+                <span>Baseline SVM</span>
+            </div>
 
-            <div class="bar-area">
-                <div class="bar-group">
-                    <div class="bar blue-bar" style="height:{baseline}%;"></div>
-                    <span>{baseline:.2f}</span>
-                    <small>Baseline</small>
-                </div>
+            <div class="divider"></div>
 
-                <div class="bar-group">
-                    <div class="bar green-bar" style="height:{enhanced}%;"></div>
-                    <span>{enhanced:.2f}</span>
-                    <small>Enhanced</small>
-                </div>
+            <div>
+                <strong class="green-value">{metric["enhanced"]}</strong>
+                <span>Enhanced SVM</span>
             </div>
         </div>
-        """
 
-    return charts
-
-
-def std_table(rows):
-    html = """
-    <table class="comparison-table std-table">
-        <thead>
-            <tr>
-                <th>Model</th>
-                <th>Accuracy (↓)</th>
-                <th>Precision (↓)</th>
-                <th>Recall (↓)</th>
-                <th>F1-Score (↓)</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td><span class="model-pill blue-pill">Baseline SVM</span></td>
+        <div class="summary-change {metric["status"]}">
+            <span>Change:</span>
+            <strong>{metric["change"]}</strong>
+        </div>
+    </div>
     """
 
-    baseline_values = [row[1] for row in rows]
-    enhanced_values = [row[2] for row in rows]
 
-    for value in baseline_values:
-        html += f"<td>{value}</td>"
+def fold_table(title, rows, theme):
+    body = ""
 
-    html += """
-            </tr>
-            <tr>
-                <td><span class="model-pill green-pill">Enhanced SVM</span></td>
-    """
-
-    for value in enhanced_values:
-        html += f"<td>{value}</td>"
-
-    html += """
-            </tr>
-        </tbody>
-    </table>
-    """
-
-    return html
-
-
-def so762_table(rows):
-    html = """
-    <table class="comparison-table so-table">
-        <thead>
-            <tr>
-                <th>Metric</th>
-                <th>Baseline SVM</th>
-                <th>Enhanced SVM<br>(Proposed)</th>
-                <th>Improvement</th>
-            </tr>
-        </thead>
-        <tbody>
-    """
-
-    for metric, baseline, enhanced, improvement in rows:
-        change_class = "positive" if "-" not in improvement else "negative"
-        arrow = "↑" if "-" not in improvement else "↓"
-
-        html += f"""
+    for fold, accuracy, f1_macro, f1_weighted, train_time in rows:
+        body += f"""
         <tr>
-            <td>{metric}</td>
-            <td>{baseline}</td>
-            <td>{enhanced}</td>
-            <td class="{change_class}">{arrow} {improvement}</td>
+            <td>{fold}</td>
+            <td>{accuracy:.4f}</td>
+            <td>{f1_macro:.4f}</td>
+            <td>{f1_weighted:.4f}</td>
+            <td>{train_time:.2f}s</td>
         </tr>
         """
 
-    html += """
-        </tbody>
-    </table>
-    """
-
-    return html
-
-
-def confusion_matrix(title, labels, matrix, theme):
-    max_value = max(max(row) for row in matrix)
-
-    body = ""
-
-    for i, row in enumerate(matrix):
-        body += f"<tr><th>{labels[i]}</th>"
-
-        for j, value in enumerate(row):
-            intensity = int((value / max_value) * 100) if max_value else 0
-            diag_class = "diag" if i == j else ""
-            body += (
-                f'<td class="{diag_class}" style="--heat:{intensity}%;">'
-                f"{value}"
-                f"</td>"
-            )
-
-        body += "</tr>"
-
-    header_cells = "".join([f"<th>{label}</th>" for label in labels])
-
-    total_correct = sum(matrix[i][i] for i in range(len(matrix)))
-    total_samples = sum(sum(row) for row in matrix)
-    accuracy = (total_correct / total_samples) * 100 if total_samples else 0
-
     return f"""
-    <div class="matrix-card {theme}">
-        <div class="matrix-title">{title}</div>
+    <div class="fold-card {theme}">
+        <h3>{title}</h3>
 
-        <table class="matrix-table">
+        <table class="result-table">
             <thead>
                 <tr>
-                    <th></th>
-                    {header_cells}
+                    <th>Fold</th>
+                    <th>Accuracy</th>
+                    <th>F1 Macro</th>
+                    <th>F1 Weighted</th>
+                    <th>Train Time</th>
                 </tr>
             </thead>
 
@@ -316,11 +274,36 @@ def confusion_matrix(title, labels, matrix, theme):
                 {body}
             </tbody>
         </table>
-
-        <div class="matrix-total">
-            Total Correct: <strong>{total_correct:,} / {total_samples:,} ({accuracy:.2f}%)</strong>
-        </div>
     </div>
+    """
+
+
+def std_table(rows):
+    body = ""
+
+    for metric, baseline, enhanced in rows:
+        body += f"""
+        <tr>
+            <td>{metric}</td>
+            <td>{baseline}</td>
+            <td>{enhanced}</td>
+        </tr>
+        """
+
+    return f"""
+    <table class="result-table">
+        <thead>
+            <tr>
+                <th>Metric</th>
+                <th>Baseline SVM</th>
+                <th>Enhanced SVM</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {body}
+        </tbody>
+    </table>
     """
 
 
@@ -337,8 +320,8 @@ render_html(
                 <div>
                     <h1>Model Comparison Results</h1>
                     <p>
-                        Comparison between Baseline SVM and Enhanced SVM
-                        using SMO + Hybrid RFF–Nyström on AAD and SpeechOcean762.
+                        Comparison between Baseline SVM and Enhanced SVM using
+                        SMO + Hybrid RFF–Nyström on AAD and SpeechOcean762.
                     </p>
                 </div>
             </div>
@@ -347,7 +330,7 @@ render_html(
                 <div class="meta-item">
                     <div class="meta-icon">▣</div>
                     <div>
-                        <span>Dataset</span>
+                        <span>Datasets</span>
                         <strong>AAD & SO762</strong>
                     </div>
                 </div>
@@ -355,8 +338,8 @@ render_html(
                 <div class="meta-item">
                     <div class="meta-icon">◎</div>
                     <div>
-                        <span>Evaluation Protocol</span>
-                        <strong>AAD: 5-Fold CV &nbsp; | &nbsp; SO762: Train–Test Split</strong>
+                        <span>Evaluation</span>
+                        <strong>AAD: 5-Fold CV | SO762: Train–Test Split</strong>
                     </div>
                 </div>
             </div>
@@ -364,8 +347,8 @@ render_html(
 
         <div class="mc-tabs">
             <a class="active" href="#overview">Overview</a>
-            <a href="#aad">AAD Results (Balanced)</a>
-            <a href="#so762">SO762 Results (Imbalanced)</a>
+            <a href="#aad">AAD Results</a>
+            <a href="#so762">SO762 Results</a>
         </div>
     </section>
     """
@@ -373,7 +356,7 @@ render_html(
 
 
 # =========================
-# OVERALL PERFORMANCE SUMMARY
+# AAD DATASET RESULTS
 # =========================
 
 render_html(
@@ -382,13 +365,26 @@ render_html(
         <div class="section-heading">
             <div class="section-icon">⌘</div>
             <div>
-                <h2>Overall Performance Summary</h2>
-                <p>Average results across all evaluation splits and dataset-level summaries.</p>
+                <h2>AAD Dataset Results</h2>
+                <p>Mean results from 5-fold stratified cross-validation.</p>
             </div>
         </div>
 
         <div class="summary-grid">
-            {''.join(metric_card(item) for item in overview_metrics)}
+            {''.join(summary_card(item) for item in aad_summary)}
+        </div>
+
+        <div class="insight-box success-insight">
+            <h3>AAD Summary Insights</h3>
+            <ul>
+                <li>Enhanced SVM improved accuracy from <strong>82.09%</strong> to <strong>85.39%</strong>.</li>
+                <li>Precision increased from <strong>82.48%</strong> to <strong>85.58%</strong>.</li>
+                <li>Recall increased from <strong>82.09%</strong> to <strong>85.39%</strong>.</li>
+                <li>Weighted F1 increased from <strong>82.21%</strong> to <strong>85.43%</strong>.</li>
+                <li>Macro F1 increased from <strong>82.27%</strong> to <strong>85.54%</strong>.</li>
+                <li>Accuracy standard deviation decreased from <strong>±0.0209</strong> to <strong>±0.0099</strong>, showing more stable results.</li>
+                <li>The enhanced model required more training time because of RFF–Nyström feature construction and SMO optimization.</li>
+            </ul>
         </div>
     </section>
     """
@@ -396,143 +392,121 @@ render_html(
 
 
 # =========================
-# AAD CHARTS + CONFUSION MATRIX
+# SO762 CARD RESULTS
 # =========================
 
-aad_left, aad_right = st.columns([1.15, 1], gap="large")
-
-with aad_left:
-    render_html(
-        f"""
-        <section class="mc-card" id="aad">
-            <div class="section-heading">
-                <div class="section-icon">▥</div>
-                <div>
-                    <h2>Cross-Validation Performance (AAD Dataset)</h2>
-                    <p>5-fold stratified cross-validation results using macro-level evaluation.</p>
-                </div>
-            </div>
-
-            <div class="chart-grid">
-                {small_bar_chart(aad_metrics)}
-            </div>
-
-            <div class="legend-row">
-                <span><i class="legend-blue"></i> Baseline SVM</span>
-                <span><i class="legend-green"></i> Enhanced SVM</span>
-            </div>
-
-            <h3 class="small-section-title">Standard Deviation (Lower is Better)</h3>
-
-            {std_table(aad_std)}
-
-            <div class="success-note">
-                ✓ Enhanced SVM shows higher performance and more consistent results across all AAD metrics.
-            </div>
-        </section>
-        """
-    )
-
-with aad_right:
-    render_html(
-        f"""
-        <section class="mc-card">
-            <div class="section-heading">
-                <div class="section-icon">▦</div>
-                <div>
-                    <h2>Confusion Matrix (AAD Dataset)</h2>
-                    <p>Aggregated across 5 folds. Values show actual vs predicted fluency class.</p>
-                </div>
-            </div>
-
-            <div class="matrix-grid">
-                {confusion_matrix("Baseline SVM", ["Low", "Intermediate", "High"], aad_baseline_cm, "blue-theme")}
-                {confusion_matrix("Enhanced SVM (Proposed)", ["Low", "Intermediate", "High"], aad_enhanced_cm, "green-theme")}
-            </div>
-
-            <div class="success-note">
-                ✓ Enhanced SVM improves correct predictions in Low, Intermediate, and High classes.
-            </div>
-        </section>
-        """
-    )
-
-
-# =========================
-# SO762 + LOWER PANELS
-# =========================
-
-so_left, so_mid, so_right = st.columns([1, 1.45, 1], gap="large")
-
-with so_left:
-    render_html(
-        f"""
-        <section class="mc-card" id="so762">
-            <div class="section-heading compact">
-                <div class="section-icon">▥</div>
-                <div>
-                    <h2>SO762 Dataset Results</h2>
-                    <p>Train–test split results for imbalanced fluency classes.</p>
-                </div>
-            </div>
-
-            {so762_table(so762_metrics)}
-        </section>
-        """
-    )
-
-with so_mid:
-    render_html(
-        f"""
-        <section class="mc-card">
-            <div class="section-heading compact">
-                <div class="section-icon">▦</div>
-                <div>
-                    <h2>Confusion Matrix (SO762 Dataset)</h2>
-                    <p>Single train–test split with four score-based fluency groups.</p>
-                </div>
-            </div>
-
-            <div class="matrix-grid so-matrix-grid">
-                {confusion_matrix("Baseline SVM", ["0–3", "4–5", "6–7", "8–10"], so762_baseline_cm, "blue-theme")}
-                {confusion_matrix("Enhanced SVM (Proposed)", ["0–3", "4–5", "6–7", "8–10"], so762_enhanced_cm, "green-theme")}
-            </div>
-
-            <div class="warning-note">
-                ⚠ Performance is limited by severe class imbalance; class 8–10 dominates the dataset.
-            </div>
-        </section>
-        """
-    )
-
-with so_right:
-    render_html(
-        """
-        <section class="mc-card insight-card">
-            <div class="section-heading compact">
-                <div class="section-icon">💡</div>
-                <div>
-                    <h2>Key Insights</h2>
-                </div>
-            </div>
-
-            <ul class="insight-list">
-                <li>Enhanced SVM improves performance on the balanced AAD dataset.</li>
-                <li>Lower standard deviation means more stable cross-validation results.</li>
-                <li>SO762 still shows limitations because of class imbalance.</li>
-                <li>Training time increases, but the trade-off is acceptable for offline training.</li>
-            </ul>
-        </section>
-
-        <section class="takeaway-card">
-            <div class="takeaway-icon">🏆</div>
+render_html(
+    f"""
+    <section class="mc-card" id="so762">
+        <div class="section-heading">
+            <div class="section-icon">▥</div>
             <div>
-                <h2>Takeaway</h2>
-                <p>
-                    Enhanced SVM with SMO and Hybrid RFF–Nyström improves accuracy,
-                    stability, and generalization especially on balanced datasets like AAD.
-                </p>
+                <h2>SO762 Dataset Results</h2>
+                <p>Train-test split results for the imbalanced SpeechOcean762 dataset.</p>
             </div>
-        </section>
-        """
-    )
+        </div>
+
+        <div class="summary-grid so-summary-grid">
+            {''.join(so762_card(item) for item in so762_summary)}
+        </div>
+
+        <div class="insight-box warning-insight">
+            <h3>SO762 Insights</h3>
+            <ul>
+                <li>Enhanced SVM improved accuracy from <strong>70.52%</strong> to <strong>72.28%</strong>.</li>
+                <li>Precision increased slightly from <strong>67.43%</strong> to <strong>67.86%</strong>.</li>
+                <li>Recall increased from <strong>70.52%</strong> to <strong>72.28%</strong>.</li>
+                <li>Weighted F1 decreased from <strong>68.52%</strong> to <strong>67.06%</strong>.</li>
+                <li>Macro F1 decreased from <strong>43.00%</strong> to <strong>38.00%</strong>, showing that minority classes remain difficult.</li>
+                <li>SO762 standard deviation is not available because the result uses a train-test split instead of 5-fold cross-validation.</li>
+                <li>The SO762 dataset is strongly imbalanced, which affects F1-score performance.</li>
+            </ul>
+        </div>
+    </section>
+    """
+)
+
+
+# =========================
+# AAD PER-FOLD TABLES
+# =========================
+
+render_html(
+    f"""
+    <section class="mc-card" id="aad">
+        <div class="section-heading">
+            <div class="section-icon">▦</div>
+            <div>
+                <h2>Per-Fold Breakdown (AAD Dataset)</h2>
+                <p>Exact fold-by-fold results from baseline and enhanced SVM training.</p>
+            </div>
+        </div>
+
+        <div class="fold-grid">
+            {fold_table("Baseline SVM", baseline_folds, "blue-theme")}
+            {fold_table("Enhanced SVM", enhanced_folds, "green-theme")}
+        </div>
+
+        <div class="insight-box success-insight">
+            <h3>Per-Fold Insights</h3>
+            <ul>
+                <li>Enhanced SVM is consistently higher than Baseline SVM across all five folds.</li>
+                <li>The strongest enhanced result occurs in <strong>Fold 5</strong> with <strong>0.8732 accuracy</strong>.</li>
+                <li>Baseline SVM shows more variation, with its lowest accuracy at <strong>0.7895</strong> in Fold 3.</li>
+                <li>Enhanced SVM has more stable fold performance, supported by its lower standard deviation.</li>
+            </ul>
+        </div>
+    </section>
+    """
+)
+
+
+# =========================
+# STANDARD DEVIATION
+# =========================
+
+render_html(
+    f"""
+    <section class="mc-card">
+        <div class="section-heading">
+            <div class="section-icon">σ</div>
+            <div>
+                <h2>Standard Deviation Summary</h2>
+                <p>Lower standard deviation indicates more stable cross-validation performance.</p>
+            </div>
+        </div>
+
+        {std_table(aad_std)}
+
+        <div class="success-note">
+            ✓ Enhanced SVM has lower standard deviation for Accuracy, F1 Macro, and F1 Weighted.
+        </div>
+    </section>
+    """
+)
+
+
+# =========================
+# KEY INSIGHTS
+# =========================
+
+render_html(
+    """
+    <section class="mc-card">
+        <div class="section-heading">
+            <div class="section-icon">💡</div>
+            <div>
+                <h2>Key Insights</h2>
+                <p>Summary interpretation based on the final model comparison results.</p>
+            </div>
+        </div>
+
+        <ul class="insight-list">
+            <li>Enhanced SVM improves AAD accuracy, precision, recall, weighted F1, and macro F1.</li>
+            <li>Enhanced SVM has lower AAD accuracy standard deviation, showing more stable cross-validation performance.</li>
+            <li>SO762 accuracy, precision, and recall improve, but macro and weighted F1 decrease due to strong class imbalance.</li>
+            <li>Training time increases because the enhanced approach uses hybrid RFF–Nyström features and SMO optimization.</li>
+        </ul>
+    </section>
+    """
+)

@@ -182,6 +182,32 @@
     font-size: 13px;
 }
 
+/* =========================
+   BRAIN ICON FIX
+========================= */
+
+.brain-feature-icon,
+.brain-workflow-icon {
+    color: #0b1738 !important;
+    background: #eaf2ff !important;
+}
+
+.brain-feature-icon svg,
+.brain-workflow-icon svg {
+    width: 38px;
+    height: 38px;
+}
+
+.brain-feature-icon svg *,
+.brain-workflow-icon svg * {
+    stroke: #0b1738 !important;
+    fill: none !important;
+}
+
+/* =========================
+   WORKFLOW
+========================= */
+
 .workflow {
     display: grid;
     grid-template-columns: 1fr 0.4fr 1fr 0.4fr 1fr 0.4fr 1fr 0.4fr 1fr;
@@ -200,12 +226,20 @@
     height: 26px;
     border-radius: 999px;
     background: #0b57e3;
-    color: white;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
     display: grid;
     place-items: center;
     font-size: 13px;
     font-weight: 900;
     margin: 0 auto 8px;
+    text-shadow: none !important;
+}
+
+.step-number,
+.step-number * {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
 }
 
 .workflow-icon {
