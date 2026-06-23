@@ -45,6 +45,14 @@ def get_query_model():
     return None
 
 
+def is_wav_file(uploaded_file):
+    if uploaded_file is None:
+        return False
+
+    file_ext = uploaded_file.name.split(".")[-1].lower() if "." in uploaded_file.name else ""
+    return file_ext == "wav"
+
+
 def get_wav_info(uploaded_file):
     try:
         uploaded_file.seek(0)
@@ -108,7 +116,7 @@ if query_model:
     st.session_state.selected_dataset = query_model
 
 selected_dataset = st.session_state.selected_dataset
-selected_model_text = "AAD Model" if selected_dataset == "AAD" else "SpeechOcean Model"
+selected_model_text = "AAD Dataset" if selected_dataset == "AAD" else "SpeechOcean Model"
 
 
 # =========================
@@ -121,15 +129,16 @@ render_html(
         <div>
             <h1 class="upload-title">Upload Audio</h1>
             <p class="upload-subtitle">
-                Upload a speech audio file and select the dataset/model to use for fluency classification.
+                Upload a WAV speech audio file and select the dataset/model to use for fluency classification.
             </p>
         </div>
 
         <div class="format-card">
             <div class="format-icon">i</div>
             <div>
-                <div class="format-title">Accepted Formats</div>
-                <div class="format-text">WAV, MP3</div>
+                <div class="format-title">Accepted Format</div>
+                <div class="format-text">WAV only</div>
+                <div class="format-text">Recommended: 16 kHz WAV audio</div>
                 <div class="format-text">Max file size: 500 MB</div>
             </div>
         </div>
@@ -166,7 +175,7 @@ render_html(
 
                 <div class="model-content">
                     <div class="model-heading-row">
-                        <h3>AAD Model</h3>
+                        <h3>AAD Dataset</h3>
                         <span class="model-badge blue-badge">Balanced</span>
                     </div>
 
@@ -188,7 +197,7 @@ render_html(
 
                 <div class="model-content">
                     <div class="model-heading-row">
-                        <h3>SpeechOcean Model</h3>
+                        <h3>SpeechOcean Dataset</h3>
                         <span class="model-badge gray-badge">Imbalanced</span>
                     </div>
 
@@ -227,29 +236,35 @@ with upload_col:
             <div class="section-title-row upload-title-inside">
                 <div class="step-circle">2</div>
                 <div>
-                    <h2>Upload Audio File</h2>
-                    <p>Upload a single audio file for preprocessing and fluency classification.</p>
+                    <h2>Upload WAV Audio File</h2>
+                    <p>Upload a single WAV audio file for preprocessing and fluency classification.</p>
                 </div>
             </div>
             """
         )
 
         uploaded_file = st.file_uploader(
-            "Drag and drop your audio file here",
-            type=["wav", "mp3"],
+            "Drag and drop your WAV audio file here",
+            type=["wav"],
             label_visibility="collapsed",
             key="audio_upload",
         )
 
-        # IMPORTANT:
+        valid_wav = uploaded_file is not None and is_wav_file(uploaded_file)
+
+        if uploaded_file is not None and not valid_wav:
+            st.error("Only WAV audio files are accepted. Please upload a .wav file.")
+
         # Save the uploaded audio immediately so Dashboard can detect it.
-        if uploaded_file is not None:
+        if uploaded_file is not None and valid_wav:
             save_uploaded_audio_to_session(uploaded_file, selected_dataset)
 
         render_html(
             """
             <div class="supported-text">
-                Supported formats: WAV, MP3 &nbsp;•&nbsp; Maximum file size: 500 MB
+                Supported format: WAV only &nbsp;•&nbsp;
+                Recommended sample rate: 16 kHz &nbsp;•&nbsp;
+                Maximum file size: 500 MB
             </div>
             """
         )
@@ -263,7 +278,7 @@ with preview_col:
                 """
                 <div class="empty-preview">
                     <p>No audio uploaded yet.</p>
-                    <p>Upload an audio file to see the waveform and details.</p>
+                    <p>Upload a WAV audio file to see the waveform and details.</p>
                 </div>
 
                 <div class="preview-divider"></div>
@@ -276,22 +291,37 @@ with preview_col:
                     <div><span>≋ Sample Rate</span><strong>-</strong></div>
                     <div><span>≡ Channels</span><strong>-</strong></div>
                     <div><span>▣ File Size</span><strong>-</strong></div>
+                    <div><span>▤ File Format</span><strong>-</strong></div>
+                </div>
+                """
+            )
+
+        elif not valid_wav:
+            render_html(
+                f"""
+                <div class="empty-preview">
+                    <p>Invalid file type.</p>
+                    <p>{uploaded_file.name} is not a WAV file.</p>
+                </div>
+
+                <div class="preview-divider"></div>
+
+                <h3 class="file-info-title">File Information</h3>
+
+                <div class="file-info-list">
+                    <div><span>▧ File Name</span><strong>{uploaded_file.name}</strong></div>
+                    <div><span>◷ Duration</span><strong>-</strong></div>
+                    <div><span>≋ Sample Rate</span><strong>-</strong></div>
+                    <div><span>≡ Channels</span><strong>-</strong></div>
+                    <div><span>▣ File Size</span><strong>{uploaded_file.size / (1024 * 1024):.2f} MB</strong></div>
+                    <div><span>▤ File Format</span><strong>Invalid</strong></div>
                 </div>
                 """
             )
 
         else:
             file_size_mb = uploaded_file.size / (1024 * 1024)
-            file_ext = uploaded_file.name.split(".")[-1].lower()
-
-            if file_ext == "wav":
-                audio_info = get_wav_info(uploaded_file)
-            else:
-                audio_info = {
-                    "duration": "MP3 preview only",
-                    "sample_rate": "Not available",
-                    "channels": "Not available",
-                }
+            audio_info = get_wav_info(uploaded_file)
 
             render_html('<div class="audio-note-area">')
 
@@ -316,6 +346,7 @@ with preview_col:
                     <div><span>≋ Sample Rate</span><strong>{audio_info["sample_rate"]}</strong></div>
                     <div><span>≡ Channels</span><strong>{audio_info["channels"]}</strong></div>
                     <div><span>▣ File Size</span><strong>{file_size_mb:.2f} MB</strong></div>
+                    <div><span>▤ File Format</span><strong>WAV</strong></div>
                 </div>
                 """
             )
@@ -337,7 +368,7 @@ with st.container(border=True):
                 <div class="step-circle">3</div>
                 <div>
                     <h2>Next Steps</h2>
-                    <p>After uploading, you can proceed to preprocess and classify the audio.</p>
+                    <p>After uploading, you can proceed to preprocess and classify the WAV audio.</p>
                 </div>
             </div>
             """
@@ -353,7 +384,9 @@ with st.container(border=True):
 
 if classify_clicked:
     if uploaded_file is None and "uploaded_audio_data" not in st.session_state:
-        st.warning("Please upload an audio file first before preprocessing.")
+        st.warning("Please upload a WAV audio file first before preprocessing.")
+    elif uploaded_file is not None and not is_wav_file(uploaded_file):
+        st.warning("Only WAV audio files are accepted. Please upload a valid .wav file.")
     else:
         st.session_state.selected_model = selected_dataset
         st.session_state.selected_dataset = selected_dataset

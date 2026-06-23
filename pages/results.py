@@ -594,8 +594,8 @@ def create_results_pdf(
     labels = prediction_results["labels"]
 
     for model_key, model_title in [
-        ("baseline", "Baseline Model (SVM)"),
-        ("proposed", "Proposed Model (Hybrid)"),
+        ("baseline", "Baseline SVM Model (SVM)"),
+        ("proposed", "Enhanced SVM Model (Hybrid)"),
     ]:
         result = prediction_results[model_key]
 
@@ -817,7 +817,7 @@ else:
     with model_right:
         render_html(
             build_result_card(
-                title="Proposed Model (Hybrid)",
+                title="Enhanced Model (Hybrid)",
                 badge="Enhanced",
                 result=prediction_results["proposed"],
                 labels=prediction_results["labels"],
@@ -830,20 +830,20 @@ else:
 
     if proposed_conf >= baseline_conf:
         summary_html = (
-            'The <strong class="green-text">Proposed Model (Hybrid)</strong> shows stronger confidence '
+            'The <strong class="green-text">Enhanced Model (Hybrid)</strong> shows stronger confidence '
             'than the <strong class="blue-text">Baseline Model</strong> for this uploaded audio sample.'
         )
         summary_plain_text = (
-            "The Proposed Model (Hybrid) shows stronger confidence than the Baseline Model "
+            "The Enhanced Model (Hybrid) shows stronger confidence than the Baseline Model "
             "for this uploaded audio sample."
         )
     else:
         summary_html = (
             'The <strong class="blue-text">Baseline Model</strong> shows stronger confidence '
-            'than the <strong class="green-text">Proposed Model (Hybrid)</strong> for this uploaded audio sample.'
+            'than the <strong class="green-text">Enhanced Model (Hybrid)</strong> for this uploaded audio sample.'
         )
         summary_plain_text = (
-            "The Baseline Model shows stronger confidence than the Proposed Model (Hybrid) "
+            "The Baseline Model shows stronger confidence than the Enhanced Model (Hybrid) "
             "for this uploaded audio sample."
         )
 
